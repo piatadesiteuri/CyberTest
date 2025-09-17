@@ -1,74 +1,47 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Box, Container, VStack, Image, useColorModeValue } from '@chakra-ui/react'
 import LoginForm from '@/components/auth/forms/LoginForm'
 import RegisterForm from '@/components/auth/forms/RegisterForm'
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
 
-  const bgGradient = useColorModeValue(
-    'linear(to-br, brand.50, brand.100)',
-    'linear(to-br, gray.900, gray.800)'
-  )
-
   return (
-    <Box minH="100vh" bgGradient={bgGradient}>
-      <Container maxW="container.xl" py={8}>
-        <VStack spacing={8}>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+      <div className="container mx-auto px-4 py-8">
+        <div className="space-y-8">
           {/* Logo and Header */}
-          <VStack spacing={4}>
-            <Image
-              src="/logo.png"
-              alt="CyberTest Logo"
-              boxSize="80px"
-              objectFit="contain"
-            />
-            <Box textAlign="center">
-              <Box
-                fontSize="4xl"
-                fontWeight="bold"
-                bgGradient="linear(to-r, brand.500, brand.700)"
-                bgClip="text"
-              >
+          <div className="text-center space-y-4">
+            <div className="mx-auto w-20 h-20 bg-blue-600 rounded-xl flex items-center justify-center">
+              <span className="text-white text-2xl font-bold">🛡️</span>
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
                 CyberTest
-              </Box>
-              <Box fontSize="lg" color="gray.600" mt={2}>
+              </h1>
+              <p className="text-lg text-gray-600 mt-2">
                 All-in-One Cybersecurity Training Platform
-              </Box>
-            </Box>
-          </VStack>
+              </p>
+            </div>
+          </div>
 
           {/* Auth Form */}
-          <Box
-            bg="white"
-            p={8}
-            rounded="xl"
-            shadow="xl"
-            w="full"
-            maxW="md"
-            border="1px"
-            borderColor="gray.200"
-          >
+          <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-md mx-auto border border-gray-200">
             {isLogin ? (
               <LoginForm onSwitchToRegister={() => setIsLogin(false)} />
             ) : (
               <RegisterForm onSwitchToLogin={() => setIsLogin(true)} />
             )}
-          </Box>
+          </div>
 
           {/* Footer */}
-          <Box textAlign="center" color="gray.600" fontSize="sm">
-            <Text>
-              © 2025 CyberTest. All rights reserved.
-            </Text>
-            <Text mt={1}>
-              Empowering organizations with cybersecurity awareness.
-            </Text>
-          </Box>
-        </VStack>
-      </Container>
-    </Box>
+          <div className="text-center text-gray-600 text-sm">
+            <p>© 2025 CyberTest. All rights reserved.</p>
+            <p className="mt-1">Empowering organizations with cybersecurity awareness.</p>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

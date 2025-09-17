@@ -1,23 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import {
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  InputGroup,
-  InputRightElement,
-  VStack,
-  Text,
-  Link,
-  useToast,
-  Divider,
-  IconButton,
-  HStack,
-} from '@chakra-ui/react'
-import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons'
 import { useAuth } from '@/contexts/AuthContext'
 import { LoginRequest } from '@/types/auth'
 
@@ -35,7 +18,6 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   
   const { login } = useAuth()
-  const toast = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,21 +25,10 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
     try {
       await login(formData)
-      toast({
-        title: 'Login successful!',
-        description: 'Welcome back to CyberTest.',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      })
+      // Success handled by context
     } catch (error: any) {
-      toast({
-        title: 'Login failed',
-        description: error.message || 'An error occurred during login.',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      })
+      console.error('Login error:', error)
+      // Error handled by context
     } finally {
       setIsLoading(false)
     }
@@ -72,96 +43,117 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
   }
 
   return (
-    <Box w="full" maxW="md" mx="auto">
-      <VStack spacing={6} align="stretch">
-        <Box textAlign="center">
-          <Text fontSize="2xl" fontWeight="bold" color="harmony.dark">
+    <div className="w-full max-w-md mx-auto">
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900">
             Welcome Back
-          </Text>
-          <Text color="gray.600" mt={2}>
+          </h2>
+          <p className="mt-2 text-gray-600">
             Sign in to your CyberTest account
-          </Text>
-        </Box>
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit}>
-          <VStack spacing={4}>
-            <FormControl isRequired>
-              <FormLabel>Email Address</FormLabel>
-              <Input
-                type="email"
-                name="email"
-                value={formData.email}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="Enter your email"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
+                value={formData.password}
                 onChange={handleInputChange}
-                placeholder="Enter your email"
-                variant="filled"
-                size="lg"
+                placeholder="Enter your password"
+                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                required
               />
-            </FormControl>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
+          </div>
 
-            <FormControl isRequired>
-              <FormLabel>Password</FormLabel>
-              <InputGroup>
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="Enter your password"
-                  variant="filled"
-                  size="lg"
-                />
-                <InputRightElement h="full">
-                  <IconButton
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    icon={showPassword ? <ViewOffIcon /> : <ViewIcon />}
-                    variant="ghost"
-                    onClick={() => setShowPassword(!showPassword)}
-                  />
-                </InputRightElement>
-              </InputGroup>
-            </FormControl>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                name="rememberMe"
+                checked={formData.rememberMe}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
+                Remember me
+              </label>
+            </div>
+            <a href="#" className="text-sm text-blue-600 hover:text-blue-500">
+              Forgot password?
+            </a>
+          </div>
 
-            <HStack w="full" justify="space-between">
-              <Text fontSize="sm" color="gray.600">
-                Don't have an account?{' '}
-                <Link color="brand.500" onClick={onSwitchToRegister}>
-                  Sign up
-                </Link>
-              </Text>
-              <Link color="brand.500" fontSize="sm">
-                Forgot password?
-              </Link>
-            </HStack>
-
-            <Button
-              type="submit"
-              colorScheme="brand"
-              size="lg"
-              w="full"
-              isLoading={isLoading}
-              loadingText="Signing in..."
-            >
-              Sign In
-            </Button>
-          </VStack>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+          >
+            {isLoading ? 'Signing in...' : 'Sign In'}
+          </button>
         </form>
 
-        <Divider />
+        <div className="text-center">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <button
+              onClick={onSwitchToRegister}
+              className="text-blue-600 hover:text-blue-500 font-medium"
+            >
+              Sign up
+            </button>
+          </p>
+        </div>
 
-        <Box textAlign="center">
-          <Text fontSize="sm" color="gray.600">
-            Continue with
-          </Text>
-          <HStack justify="center" mt={2} spacing={4}>
-            <Button variant="outline" size="sm">
-              Google
-            </Button>
-            <Button variant="outline" size="sm">
-              Microsoft
-            </Button>
-          </HStack>
-        </Box>
-      </VStack>
-    </Box>
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">Or continue with</span>
+          </div>
+        </div>
+
+        <div className="flex space-x-4">
+          <button className="flex-1 bg-white border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium">
+            Google
+          </button>
+          <button className="flex-1 bg-white border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium">
+            Microsoft
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
