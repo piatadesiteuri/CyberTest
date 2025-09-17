@@ -41,9 +41,9 @@ export default function Header() {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <button className="btn-secondary">
+            <Link href="/auth" className="btn-secondary">
               Sign In
-            </button>
+            </Link>
             <Link href="/dashboard" className="btn-primary">
               Access Dashboard
             </Link>
@@ -73,9 +73,9 @@ export default function Header() {
                 </a>
               ))}
               <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-                <button className="btn-secondary w-full">
+                <Link href="/auth" className="btn-secondary w-full text-center">
                   Sign In
-                </button>
+                </Link>
                 <Link href="/dashboard" className="btn-primary w-full text-center">
                   Access Dashboard
                 </Link>
