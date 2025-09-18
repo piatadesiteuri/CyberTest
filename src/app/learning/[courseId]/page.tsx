@@ -76,9 +76,22 @@ export default function CoursePage() {
   const [selectedModule, setSelectedModule] = useState<Module | null>(null)
 
   useEffect(() => {
-    // TODO: Replace with actual API call
-    // For now, using mock data inspired by The Odin Project structure
-    const mockCourse: Course = {
+    const fetchCourse = async () => {
+      try {
+        const response = await fetch(`http://localhost:3001/api/courses/${courseId}`)
+        if (!response.ok) {
+          throw new Error('Failed to fetch course')
+        }
+        const data = await response.json()
+        if (data.success) {
+          setCourse(data.course)
+        } else {
+          throw new Error(data.message || 'Failed to fetch course')
+        }
+      } catch (error) {
+        console.error('Error fetching course:', error)
+        // Fallback to mock data if API fails
+        const mockCourse: Course = {
       id: courseId as string,
       title: 'Cybersecurity Fundamentals',
       description: 'Master the basics of cybersecurity, threat awareness, and security best practices. Perfect for all employees regardless of technical background.',
@@ -244,8 +257,12 @@ export default function CoursePage() {
       }
     }
 
-    setCourse(mockCourse)
-    setLoading(false)
+        setCourse(mockCourse)
+      }
+      setLoading(false)
+    }
+
+    fetchCourse()
   }, [courseId])
 
   if (loading) {

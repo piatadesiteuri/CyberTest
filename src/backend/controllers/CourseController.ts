@@ -33,7 +33,7 @@ export class CourseController {
           created_at ASC
       `) as any[];
 
-      const formattedCourses = courses.map(course => ({
+      const formattedCourses = courses.map((course: any) => ({
         id: course.id,
         title: course.title,
         description: course.description,
@@ -108,7 +108,7 @@ export class CourseController {
           ORDER BY \`order\` ASC
         `, [module.id]) as any[];
 
-        module.lessons = lessons.map(lesson => ({
+        module.lessons = lessons.map((lesson: any) => ({
           id: lesson.id,
           moduleId: lesson.module_id,
           title: lesson.title,
@@ -158,7 +158,7 @@ export class CourseController {
             isActive: quiz.is_active,
             createdAt: quiz.created_at,
             updatedAt: quiz.updated_at,
-            questions: questions.map(question => ({
+            questions: questions.map((question: any) => ({
               id: question.id,
               quizId: question.quiz_id,
               text: question.text,
@@ -188,7 +188,7 @@ export class CourseController {
         createdBy: course.created_by,
         createdAt: course.created_at,
         updatedAt: course.updated_at,
-        modules: modules.map(module => ({
+        modules: modules.map((module: any) => ({
           id: module.id,
           courseId: module.course_id,
           title: module.title,
