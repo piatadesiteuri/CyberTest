@@ -20,6 +20,7 @@
     "db:reset": "ts-node --project tsconfig.backend.json src/backend/scripts/createDatabase.ts",
     "db:create-admin": "ts-node --project tsconfig.backend.json src/backend/scripts/createAdmin.ts",
     "db:create-learning": "ts-node --project tsconfig.backend.json src/backend/scripts/createLearningTables.ts",
+    "db:populate-full": "ts-node --project tsconfig.backend.json src/backend/scripts/populateFullCourse.ts",
     "dev:full": "concurrently \"npm run backend:dev\" \"npm run frontend\"",
     "dev:backend": "npm run backend:dev",
     "dev:frontend": "npm run frontend"
