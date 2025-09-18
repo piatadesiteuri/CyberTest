@@ -360,30 +360,44 @@ export default function QuizPage() {
               </p>
             </div>
 
-            {/* Question Results - Only show correct count */}
+            {/* Quiz Results Summary */}
             <div className="space-y-6 mb-8">
-              <h3 className="text-xl font-bold text-gray-900">Quiz Summary</h3>
-              <div className="bg-gray-50 rounded-lg p-6">
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <div className="text-3xl font-bold text-warm-copper">
-                      {quiz.questions.filter((question, index) => {
-                        const userAnswer = answers[question.id]
-                        const correctAnswer = question.answers.find(a => a.isCorrect)
-                        return question.type === 'multiple_choice' 
-                          ? question.answers.filter(a => a.isCorrect).every(a => 
-                              Array.isArray(userAnswer) && userAnswer.includes(a.text)
-                            ) && question.answers.filter(a => a.isCorrect).length === (Array.isArray(userAnswer) ? userAnswer.length : 0)
-                          : userAnswer === correctAnswer?.text
-                      }).length}
-                    </div>
-                    <div className="text-sm text-gray-600">Correct Answers</div>
+              <h3 className="text-xl font-bold text-gray-900">Quiz Results</h3>
+              
+              {/* Summary Stats */}
+              <div className="bg-gray-50 rounded-lg p-8">
+                <div className="text-center">
+                  <div className="text-6xl font-bold text-warm-copper mb-4">
+                    {quiz.questions.filter((question, index) => {
+                      const userAnswer = answers[question.id]
+                      const correctAnswer = question.answers.find(a => a.isCorrect)
+                      return question.type === 'multiple_choice' 
+                        ? question.answers.filter(a => a.isCorrect).every(a => 
+                            Array.isArray(userAnswer) && userAnswer.includes(a.text)
+                          ) && question.answers.filter(a => a.isCorrect).length === (Array.isArray(userAnswer) ? userAnswer.length : 0)
+                        : userAnswer === correctAnswer?.text
+                    }).length}/{quiz.questions.length}
                   </div>
-                  <div>
-                    <div className="text-3xl font-bold text-gray-600">
-                      {quiz.questions.length}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Questions</div>
+                  <div className="text-lg text-gray-600 mb-2">Correct Answers</div>
+                  <div className="text-sm text-gray-500">
+                    {quiz.questions.filter((question, index) => {
+                      const userAnswer = answers[question.id]
+                      const correctAnswer = question.answers.find(a => a.isCorrect)
+                      return question.type === 'multiple_choice' 
+                        ? question.answers.filter(a => a.isCorrect).every(a => 
+                            Array.isArray(userAnswer) && userAnswer.includes(a.text)
+                          ) && question.answers.filter(a => a.isCorrect).length === (Array.isArray(userAnswer) ? userAnswer.length : 0)
+                        : userAnswer === correctAnswer?.text
+                    }).length === quiz.questions.length ? 'Perfect! All answers correct!' : 
+                    quiz.questions.filter((question, index) => {
+                      const userAnswer = answers[question.id]
+                      const correctAnswer = question.answers.find(a => a.isCorrect)
+                      return question.type === 'multiple_choice' 
+                        ? question.answers.filter(a => a.isCorrect).every(a => 
+                            Array.isArray(userAnswer) && userAnswer.includes(a.text)
+                          ) && question.answers.filter(a => a.isCorrect).length === (Array.isArray(userAnswer) ? userAnswer.length : 0)
+                        : userAnswer === correctAnswer?.text
+                    }).length === 0 ? 'Keep studying and try again!' : 'Good effort! Review the material and try again.'}
                   </div>
                 </div>
               </div>
@@ -486,48 +500,88 @@ export default function QuizPage() {
 
         {/* Question */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">
-            {currentQuestion.text}
-          </h3>
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-warm-copper text-white rounded-full flex items-center justify-center text-sm font-bold">
+                  {currentQuestionIndex + 1}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-700">Question {currentQuestionIndex + 1}</h3>
+                  <p className="text-sm text-gray-500">{currentQuestion.points} point{currentQuestion.points > 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              <div className="text-sm text-gray-500">
+                {Math.round(((currentQuestionIndex + 1) / quiz.questions.length) * 100)}% Complete
+              </div>
+            </div>
+            <div className="prose prose-lg max-w-none text-gray-900" 
+                 dangerouslySetInnerHTML={{ 
+                   __html: currentQuestion.text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-warm-copper">$1</strong>')
+                                             .replace(/\n/g, '<br/>')
+                 }} 
+            />
+          </div>
 
-          <div className="space-y-4">
-            {currentQuestion.answers.map((answer, index) => (
-              <label
-                key={index}
-                className={`block p-4 border rounded-lg cursor-pointer transition-colors ${
-                  (Array.isArray(answers[currentQuestion.id]) 
-                    ? answers[currentQuestion.id].includes(answer.text)
-                    : answers[currentQuestion.id] === answer.text)
-                    ? 'border-warm-copper bg-warm-copper/10'
-                    : 'border-gray-200 hover:border-warm-copper/50'
-                }`}
-              >
-                <input
-                  type={currentQuestion.type === 'multiple_choice' ? 'checkbox' : 'radio'}
-                  name={`question-${currentQuestion.id}`}
-                  value={answer.text}
-                  checked={
-                    currentQuestion.type === 'multiple_choice'
-                      ? Array.isArray(answers[currentQuestion.id]) && answers[currentQuestion.id].includes(answer.text)
-                      : answers[currentQuestion.id] === answer.text
-                  }
-                  onChange={(e) => {
-                    if (currentQuestion.type === 'multiple_choice') {
-                      const currentAnswers = Array.isArray(answers[currentQuestion.id]) ? answers[currentQuestion.id] : []
-                      if (e.target.checked) {
-                        handleAnswerChange(currentQuestion.id, [...currentAnswers, answer.text])
+          <div className="space-y-3">
+            {currentQuestion.answers.map((answer, index) => {
+              const isSelected = currentQuestion.type === 'multiple_choice'
+                ? Array.isArray(answers[currentQuestion.id]) && answers[currentQuestion.id].includes(answer.text)
+                : answers[currentQuestion.id] === answer.text
+              
+              return (
+                <label
+                  key={index}
+                  className={`block p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                    isSelected
+                      ? 'border-warm-copper bg-gradient-to-r from-warm-copper/5 to-warm-bronze/5 shadow-md' 
+                      : 'border-gray-200 hover:border-warm-copper/50 hover:bg-warm-copper/5 hover:shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-start">
+                    <div className={`w-6 h-6 rounded-full border-2 mr-4 mt-0.5 flex items-center justify-center transition-colors ${
+                      isSelected
+                        ? 'border-warm-copper bg-warm-copper' 
+                        : 'border-gray-300'
+                    }`}>
+                      {isSelected && (
+                        <div className="w-3 h-3 bg-white rounded-full"></div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-500">
+                          {String.fromCharCode(65 + index)}.
+                        </span>
+                        {isSelected && (
+                          <div className="w-2 h-2 bg-warm-copper rounded-full"></div>
+                        )}
+                      </div>
+                      <p className="text-gray-800 mt-1 leading-relaxed">{answer.text}</p>
+                    </div>
+                  </div>
+                  <input
+                    type={currentQuestion.type === 'multiple_choice' ? 'checkbox' : 'radio'}
+                    name={`question-${currentQuestion.id}`}
+                    value={answer.text}
+                    checked={isSelected}
+                    onChange={(e) => {
+                      if (currentQuestion.type === 'multiple_choice') {
+                        const currentAnswers = Array.isArray(answers[currentQuestion.id]) ? answers[currentQuestion.id] : []
+                        if (e.target.checked) {
+                          handleAnswerChange(currentQuestion.id, [...currentAnswers, answer.text])
+                        } else {
+                          handleAnswerChange(currentQuestion.id, currentAnswers.filter(a => a !== answer.text))
+                        }
                       } else {
-                        handleAnswerChange(currentQuestion.id, currentAnswers.filter(a => a !== answer.text))
+                        handleAnswerChange(currentQuestion.id, answer.text)
                       }
-                    } else {
-                      handleAnswerChange(currentQuestion.id, answer.text)
-                    }
-                  }}
-                  className="sr-only"
-                />
-                <span className="text-gray-900">{answer.text}</span>
-              </label>
-            ))}
+                    }}
+                    className="sr-only"
+                  />
+                </label>
+              )
+            })}
           </div>
         </div>
 

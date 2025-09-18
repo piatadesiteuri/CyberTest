@@ -136,13 +136,14 @@ export class CourseController {
           updatedAt: lesson.updated_at
         }));
 
-        // Get quiz for module
+        // Get quiz for module (get the most recent one)
         const [quizzes] = await connection.query(`
           SELECT 
             id, module_id, title, description, type, status, time_limit, 
             passing_score, max_attempts, is_active, created_at, updated_at
           FROM quizzes 
           WHERE module_id = ? AND is_active = true
+          ORDER BY created_at DESC
           LIMIT 1
         `, [module.id]) as any[];
 
