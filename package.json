@@ -9,7 +9,11 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "backend": "ts-node --project tsconfig.backend.json src/backend/server.ts",
+    "backend:dev": "ts-node --project tsconfig.backend.json --watch src/backend/server.ts",
+    "db:create": "ts-node --project tsconfig.backend.json src/backend/scripts/createDatabase.ts",
+    "db:reset": "ts-node --project tsconfig.backend.json src/backend/scripts/createDatabase.ts"
   },
   "keywords": [
     "cybersecurity",
@@ -25,9 +29,15 @@
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "autoprefixer": "^10.4.0",
+    "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.292.0",
+    "mysql2": "^3.15.0",
     "next": "^14.0.0",
     "postcss": "^8.4.0",
     "react": "^18.0.0",
@@ -38,8 +48,13 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^13.0.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
     "eslint": "^8.0.0",
     "eslint-config-next": "^14.0.0",
-    "jest": "^29.0.0"
+    "jest": "^29.0.0",
+    "ts-node": "^10.9.2"
   }
 }
