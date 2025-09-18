@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 import DashboardHeader from './DashboardHeader'
 import Sidebar from './Sidebar'
 import MetricsOverview from './MetricsOverview'
@@ -11,8 +12,20 @@ import UserManagement from './UserManagement'
 import SocialEngineeringSims from './SocialEngineeringSims'
 import ReportingAnalytics from './ReportingAnalytics'
 
-export default function Dashboard() {
+export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { user, isAdmin } = useAuth()
+
+  if (!isAdmin()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-600">You don't have permission to access this page.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-screen bg-transparent">
@@ -29,12 +42,22 @@ export default function Dashboard() {
           <div className="max-w-7xl mx-auto">
             {/* Welcome Section */}
             <div className="mb-8">
-              <h1 className="text-4xl font-bold text-white mb-2">
-                Cybersecurity Training Dashboard
-              </h1>
-              <p className="text-harmony-cream text-lg">
-                Monitor your organization's security awareness and training progress
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-4xl font-bold text-white mb-2">
+                    Cybersecurity Training Dashboard
+                  </h1>
+                  <p className="text-harmony-cream text-lg">
+                    Welcome back, {user?.firstName}! Monitor your organization's security awareness and training progress
+                  </p>
+                </div>
+                <div className="bg-harmony-dark/20 backdrop-blur-sm rounded-lg p-4 border border-harmony-cream/20">
+                  <div className="text-sm text-harmony-cream/80">Role</div>
+                  <div className="text-lg font-semibold text-white capitalize">
+                    {user?.role?.replace('_', ' ')}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Metrics Overview */}
