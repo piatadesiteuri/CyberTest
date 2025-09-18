@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardHeader from './DashboardHeader'
@@ -11,19 +11,62 @@ import SecurityLock from './icons/SecurityLock'
 import NetworkSecurity from './icons/NetworkSecurity'
 import ThreatDetection from './icons/ThreatDetection'
 import CyberTraining from './icons/CyberTraining'
+import { courseService } from '@/services/courseService'
+import { Course } from '@/types/course'
 
 export default function UserDashboard() {
   const { user } = useAuth()
   const router = useRouter()
+  const [courses, setCourses] = useState<Course[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const coursesData = await courseService.getCourses()
+        setCourses(coursesData)
+      } catch (error) {
+        console.error('Error fetching courses:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCourses()
+  }, [])
 
   const handleCourseClick = (courseId: string) => {
     router.push(`/learning/${courseId}`)
   }
 
   const handleResumeTraining = () => {
-    // Logic to find the next incomplete lesson
-    // For now, redirect to the first lesson of foundation course
-    router.push('/learning/foundation/lesson/1-3') // Security Best Practices lesson
+    // Find foundation course and redirect to first lesson
+    const foundationCourse = courses.find(course => course.level === 'foundation')
+    if (foundationCourse) {
+      router.push(`/learning/${foundationCourse.id}`)
+    }
+  }
+
+  const getCourseIcon = (level: string) => {
+    switch (level) {
+      case 'foundation':
+        return <CyberShield className="w-8 h-8 text-warm-gold" />
+      case 'advanced':
+        return <ThreatDetection className="w-8 h-8 text-warm-gold" />
+      default:
+        return <CyberTraining className="w-8 h-8 text-warm-gold" />
+    }
+  }
+
+  const getCourseStatus = (level: string) => {
+    switch (level) {
+      case 'foundation':
+        return { text: 'Available', color: 'text-green-600', bg: 'bg-green-100' }
+      case 'advanced':
+        return { text: 'Locked', color: 'text-gray-500', bg: 'bg-gray-100' }
+      default:
+        return { text: 'Locked', color: 'text-gray-500', bg: 'bg-gray-100' }
+    }
   }
 
   return (
@@ -82,108 +125,70 @@ export default function UserDashboard() {
             Select a specialized track based on your role and experience level. Each path is designed to build practical cybersecurity skills.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Foundation Path */}
-            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-warm-copper to-warm-bronze rounded-xl flex items-center justify-center">
-                  <CyberShield className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-gray-500">FOUNDATION</div>
-                  <div className="text-2xl font-bold text-gray-900">6 Modules</div>
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Cybersecurity Fundamentals</h3>
-              <p className="text-gray-600 mb-6">
-                Master the basics of cybersecurity, threat awareness, and security best practices. 
-                Perfect for all employees regardless of technical background.
-              </p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-sm text-gray-500">
-                  <BookOpen className="w-4 h-4" />
-                  <span>12 Lessons</span>
-                  <span>•</span>
-                  <span>4 Quizzes</span>
-                </div>
-                <button 
-                  onClick={() => handleCourseClick('foundation')}
-                  className="bg-harmony-dark text-white px-6 py-2 rounded-lg hover:bg-harmony-dark/90 transition-colors flex items-center"
-                >
-                  Continue
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </button>
-              </div>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-harmony-dark mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading courses...</p>
             </div>
-
-            {/* Advanced Path */}
-            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-warm-amber to-warm-copper rounded-xl flex items-center justify-center">
-                  <ThreatDetection className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-gray-500">ADVANCED</div>
-                  <div className="text-2xl font-bold text-gray-900">8 Modules</div>
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Threat Analysis & Response</h3>
-              <p className="text-gray-600 mb-6">
-                Deep dive into advanced threat detection, incident response, and security architecture. 
-                Designed for IT professionals and security teams.
-              </p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-sm text-gray-500">
-                  <BookOpen className="w-4 h-4" />
-                  <span>18 Lessons</span>
-                  <span>•</span>
-                  <span>6 Labs</span>
-                </div>
-                <button 
-                  onClick={() => handleCourseClick('advanced')}
-                  className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors flex items-center cursor-not-allowed"
-                  disabled
-                >
-                  Locked
-                  <Lock className="w-4 h-4 ml-1" />
-                </button>
-              </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {courses.map((course) => {
+                const status = getCourseStatus(course.level)
+                const isLocked = course.level !== 'foundation'
+                
+                return (
+                  <div key={course.id} className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 hover:shadow-xl transition-shadow">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="w-12 h-12 bg-gradient-to-br from-warm-copper to-warm-bronze rounded-xl flex items-center justify-center">
+                        {getCourseIcon(course.level)}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-500 uppercase">{course.level}</div>
+                        <div className="text-2xl font-bold text-gray-900">
+                          {course.modules?.length || 0} Modules
+                        </div>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">{course.title}</h3>
+                    <p className="text-gray-600 mb-6">
+                      {course.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2 text-sm text-gray-500">
+                        <BookOpen className="w-4 h-4" />
+                        <span>{course.estimatedDuration} min</span>
+                        <span>•</span>
+                        <span className={`px-2 py-1 rounded-full text-xs ${status.bg} ${status.color}`}>
+                          {status.text}
+                        </span>
+                      </div>
+                      <button 
+                        onClick={() => handleCourseClick(course.id)}
+                        className={`px-6 py-2 rounded-lg transition-colors flex items-center ${
+                          isLocked 
+                            ? 'bg-gray-200 text-gray-700 cursor-not-allowed' 
+                            : 'bg-harmony-dark text-white hover:bg-harmony-dark/90'
+                        }`}
+                        disabled={isLocked}
+                      >
+                        {isLocked ? (
+                          <>
+                            Locked
+                            <Lock className="w-4 h-4 ml-1" />
+                          </>
+                        ) : (
+                          <>
+                            Continue
+                            <ChevronRight className="w-4 h-4 ml-1" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-
-            {/* Management Path */}
-            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-warm-bronze to-warm-copper rounded-xl flex items-center justify-center">
-                  <NetworkSecurity className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-gray-500">MANAGEMENT</div>
-                  <div className="text-2xl font-bold text-gray-900">5 Modules</div>
-                </div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Security Leadership</h3>
-              <p className="text-gray-600 mb-6">
-                Learn to lead security initiatives, manage teams, and implement security policies. 
-                Essential for managers and executives.
-              </p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-sm text-gray-500">
-                  <BookOpen className="w-4 h-4" />
-                  <span>10 Lessons</span>
-                  <span>•</span>
-                  <span>3 Case Studies</span>
-                </div>
-                <button 
-                  onClick={() => handleCourseClick('management')}
-                  className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors flex items-center cursor-not-allowed"
-                  disabled
-                >
-                  Locked
-                  <Lock className="w-4 h-4 ml-1" />
-                </button>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Current Learning Progress */}

@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
+import { CourseController } from './controllers/CourseController';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ const dbConfig = {
 };
 
 let db: mysql.Connection | null = null;
+const courseController = new CourseController();
 
 // Connect to database
 const connectDB = async () => {
@@ -187,6 +189,10 @@ app.post('/api/auth/login', async (req, res) => {
     });
   }
 });
+
+// Course routes
+app.get('/api/courses', (req, res) => courseController.getCourses(req, res));
+app.get('/api/courses/:id', (req, res) => courseController.getCourseById(req, res));
 
 // Start server
 const startServer = async () => {
