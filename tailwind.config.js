@@ -66,6 +66,27 @@ module.exports = {
           800: '#92400e',
           900: '#78350f',
         },
+        cyber: {
+          primary: '#082C38',      // Dark Teal - Primary cybersecurity color
+          secondary: '#C19976',    // Muted Tan - Secondary color
+          accent: '#FCD8B4',       // Light Cream - Accent color
+          success: '#22c55e',      // Green - Success states
+          warning: '#f59e0b',      // Orange - Warning states
+          danger: '#ef4444',       // Red - Danger/Error states
+          info: '#3b82f6',         // Blue - Information states
+          purple: '#8b5cf6',       // Purple - Advanced features
+          gray: '#6b7280',         // Gray - Neutral states
+        },
+        warm: {
+          copper: '#B87333',       // Rich Copper - Main icon color
+          amber: '#F59E0B',        // Warm Amber - Accent
+          bronze: '#CD7F32',       // Bronze - Secondary
+          gold: '#FFD700',         // Gold - Highlights
+          brass: '#B5A642',        // Brass - Alternative
+          honey: '#FFC107',        // Honey - Light accent
+          sunset: '#FF8C00',       // Sunset Orange - Warm
+          caramel: '#D2691E',      // Caramel - Deep warm
+        },
       },
     },
   },

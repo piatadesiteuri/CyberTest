@@ -3,12 +3,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { AuthContextType, User, LoginRequest, RegisterRequest, AuthResponse } from '@/types/auth'
 import { authService } from '@/services/auth/authService'
+import { useToast } from './ToastContext'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const { addToast } = useToast()
 
   useEffect(() => {
     // Clean up corrupted localStorage data
@@ -43,8 +45,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('AuthContext login - response:', response)
       console.log('AuthContext login - setting user:', response.user)
       setUser(response.user)
+      
+      addToast({
+        type: 'success',
+        title: 'Welcome back!',
+        message: `Successfully logged in as ${response.user.firstName} ${response.user.lastName}`,
+        duration: 4000
+      })
+      
       return response
     } catch (error) {
+      addToast({
+        type: 'error',
+        title: 'Login Failed',
+        message: 'Invalid credentials. Please try again.',
+        duration: 5000
+      })
       throw error
     } finally {
       setIsLoading(false)
@@ -56,8 +72,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true)
       const response = await authService.register(userData)
       setUser(response.user)
+      
+      addToast({
+        type: 'success',
+        title: 'Account Created!',
+        message: `Welcome to CyberTest, ${response.user.firstName}! Your account has been created successfully.`,
+        duration: 5000
+      })
+      
       return response
     } catch (error) {
+      addToast({
+        type: 'error',
+        title: 'Registration Failed',
+        message: 'Unable to create account. Please try again.',
+        duration: 5000
+      })
       throw error
     } finally {
       setIsLoading(false)
@@ -67,10 +97,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       setIsLoading(true)
+      const userName = user?.firstName || 'User'
       await authService.logout()
       setUser(null)
+      
+      addToast({
+        type: 'info',
+        title: 'Logged Out',
+        message: `Goodbye, ${userName}! You have been successfully logged out.`,
+        duration: 3000
+      })
     } catch (error) {
       console.error('Logout error:', error)
+      addToast({
+        type: 'error',
+        title: 'Logout Error',
+        message: 'There was an error during logout. Please try again.',
+        duration: 4000
+      })
     } finally {
       setIsLoading(false)
     }
