@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { progressService } from '@/services/progressService'
 import { BookOpen, Clock, CheckCircle, Lock, Play, ChevronRight, Trophy, Users, Target, ArrowLeft } from 'lucide-react'
 
 interface Course {
@@ -91,7 +92,64 @@ export default function CoursePage() {
         
         if (data.success) {
           console.log('✅ Course data received:', data.course)
-          setCourse(data.course)
+          
+          // Fetch user progress for this course
+          try {
+            const progressResponse = await progressService.getCourseProgress(courseId as string)
+            console.log('📈 Progress data received:', progressResponse.data)
+            
+            // Get all lessons and check individual progress for each
+            const allLessons = data.course.modules.flatMap((module: any) => 
+              module.lessons.map((lesson: any) => ({ ...lesson, moduleId: module.id }))
+            )
+            
+            // Check progress for each lesson individually
+            const lessonProgressPromises = allLessons.map(async (lesson: any) => {
+              try {
+                const lessonProgress = await progressService.getLessonProgress(lesson.id)
+                return {
+                  lessonId: lesson.id,
+                  progress: lessonProgress.data
+                }
+              } catch (error) {
+                console.log(`⚠️ Could not fetch progress for lesson ${lesson.id}:`, error)
+                return {
+                  lessonId: lesson.id,
+                  progress: null
+                }
+              }
+            })
+            
+            const lessonProgressResults = await Promise.all(lessonProgressPromises)
+            const lessonProgressMap = lessonProgressResults.reduce((acc, { lessonId, progress }) => {
+              acc[lessonId] = progress
+              return acc
+            }, {} as Record<string, any>)
+            
+            console.log('📚 Individual lesson progress:', lessonProgressMap)
+            
+            // Add progress data to course and lessons
+            const courseWithProgress = {
+              ...data.course,
+              userProgress: {
+                ...progressResponse.data,
+                progressPercentage: progressResponse.data.overallProgress
+              },
+              modules: data.course.modules.map((module: any) => ({
+                ...module,
+                lessons: module.lessons.map((lesson: any) => ({
+                  ...lesson,
+                  userProgress: lessonProgressMap[lesson.id] || { status: 'not_started' }
+                }))
+              }))
+            }
+            
+            setCourse(courseWithProgress)
+          } catch (progressError) {
+            console.error('⚠️ Error fetching progress, using course without progress:', progressError)
+            setCourse(data.course)
+          }
+          
           setLoading(false)
           console.log('🔄 Loading set to false, course set to:', data.course)
         } else {
@@ -280,27 +338,54 @@ export default function CoursePage() {
 
                     {/* Lessons */}
                     <div className="space-y-3">
-                      {module.lessons.map((lesson) => (
-                        <div key={lesson.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            {getStatusIcon(lesson.userProgress?.status || 'not_started')}
-                            <div>
-                              <h4 className="font-medium text-gray-900">{lesson.title}</h4>
-                              <p className="text-sm text-gray-600">{lesson.description}</p>
+                      {module.lessons.map((lesson) => {
+                        const isCompleted = lesson.userProgress?.status === 'completed';
+                        return (
+                          <div 
+                            key={lesson.id} 
+                            className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
+                              isCompleted 
+                                ? 'bg-warm-copper/10 border border-warm-copper/20' 
+                                : 'bg-gray-50'
+                            }`}
+                          >
+                            <div className="flex items-center space-x-3">
+                              {getStatusIcon(lesson.userProgress?.status || 'not_started')}
+                              <div>
+                                <h4 className={`font-medium ${isCompleted ? 'text-warm-copper' : 'text-gray-900'}`}>
+                                  {lesson.title}
+                                </h4>
+                                <p className={`text-sm ${isCompleted ? 'text-warm-bronze' : 'text-gray-600'}`}>
+                                  {lesson.description}
+                                </p>
+                                {isCompleted && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-warm-copper text-white mt-1">
+                                    ✓ Read
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className={`text-xs ${isCompleted ? 'text-warm-bronze' : 'text-gray-500'} capitalize`}>
+                                {lesson.type}
+                              </span>
+                              <span className={`text-xs ${isCompleted ? 'text-warm-bronze' : 'text-gray-500'}`}>
+                                {lesson.estimatedDuration} min
+                              </span>
+                              <button 
+                                onClick={() => router.push(`/learning/${courseId}/lesson/${lesson.id}`)}
+                                className={`transition-colors ${
+                                  isCompleted 
+                                    ? 'text-warm-copper hover:text-warm-bronze' 
+                                    : 'text-warm-copper hover:text-warm-bronze'
+                                }`}
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500 capitalize">{lesson.type}</span>
-                            <span className="text-xs text-gray-500">{lesson.estimatedDuration} min</span>
-                            <button 
-                              onClick={() => router.push(`/learning/${courseId}/lesson/${lesson.id}`)}
-                              className="text-warm-copper hover:text-warm-bronze transition-colors"
-                            >
-                              <ChevronRight className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
 
                       {/* Quiz */}
                       {module.quiz && (
@@ -314,9 +399,9 @@ export default function CoursePage() {
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-xs text-gray-500">{module.quiz.timeLimit} min</span>
-                            <span className="text-xs text-gray-500">{module.quiz.passingScore}% to pass</span>
+                            <span className="text-xs text-gray-500">{module.quiz?.passingScore}% to pass</span>
                             <button 
-                              onClick={() => router.push(`/learning/${courseId}/quiz/${module.quiz.id}`)}
+                              onClick={() => router.push(`/learning/${courseId}/quiz/${module.quiz?.id}`)}
                               className="bg-warm-copper text-white px-3 py-1 rounded text-sm hover:bg-warm-bronze transition-colors"
                             >
                               Start Quiz

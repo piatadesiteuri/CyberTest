@@ -12,6 +12,7 @@ import NetworkSecurity from './icons/NetworkSecurity'
 import ThreatDetection from './icons/ThreatDetection'
 import CyberTraining from './icons/CyberTraining'
 import { courseService } from '@/services/courseService'
+import { progressService } from '@/services/progressService'
 import { Course } from '@/types/course'
 
 export default function UserDashboard() {
@@ -24,7 +25,24 @@ export default function UserDashboard() {
     const fetchCourses = async () => {
       try {
         const coursesData = await courseService.getCourses()
-        setCourses(coursesData)
+        
+        // Fetch progress for each course
+        const coursesWithProgress = await Promise.all(
+          coursesData.map(async (course) => {
+            try {
+              const progressResponse = await progressService.getCourseProgress(course.id)
+              return {
+                ...course,
+                userProgress: progressResponse.data
+              }
+            } catch (error) {
+              console.error(`Error fetching progress for course ${course.id}:`, error)
+              return course
+            }
+          })
+        )
+        
+        setCourses(coursesWithProgress)
       } catch (error) {
         console.error('Error fetching courses:', error)
       } finally {

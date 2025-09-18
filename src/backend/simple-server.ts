@@ -3,13 +3,22 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { CourseController } from './controllers/CourseController'
 import { PhishingController } from './controllers/PhishingController';
+import { ProgressController } from './controllers/ProgressController';
+import { authenticateToken } from './middleware/AuthMiddleware';
+import { jwtConfig } from '../config/database';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// JWT Configuration from config file
+const JWT_SECRET = jwtConfig.secret;
+const JWT_EXPIRES_IN = jwtConfig.expiresIn;
+const JWT_REFRESH_EXPIRES_IN = jwtConfig.refreshExpiresIn;
 
 // Database connection
 const dbConfig = {
@@ -23,6 +32,7 @@ const dbConfig = {
 let db: mysql.Connection | null = null;
 const courseController = new CourseController();
 const phishingController = new PhishingController();
+const progressController = new ProgressController();
 
 // Connect to database
 const connectDB = async () => {
@@ -88,12 +98,35 @@ app.post('/api/auth/register', async (req, res) => {
 
     const insertId = (result as any).insertId;
     
+    // Generate JWT tokens
+    const token = jwt.sign(
+      { 
+        userId: insertId, 
+        email: email, 
+        role: role,
+        type: 'access'
+      },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN as any }
+    );
+
+    const refreshToken = jwt.sign(
+      { 
+        userId: insertId, 
+        email: email, 
+        role: role,
+        type: 'refresh'
+      },
+      JWT_SECRET,
+      { expiresIn: JWT_REFRESH_EXPIRES_IN as any }
+    );
+
     return res.status(201).json({
       success: true,
       message: 'Registration successful',
       data: {
-        token: 'real-token', // In a real app, generate JWT here
-        refreshToken: 'real-refresh-token',
+        token: token,
+        refreshToken: refreshToken,
         user: {
           id: insertId,
           email: email,
@@ -165,12 +198,35 @@ app.post('/api/auth/login', async (req, res) => {
       [user.id]
     );
 
+    // Generate JWT tokens
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        role: user.role,
+        type: 'access'
+      },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN as any }
+    );
+
+    const refreshToken = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        role: user.role,
+        type: 'refresh'
+      },
+      JWT_SECRET,
+      { expiresIn: JWT_REFRESH_EXPIRES_IN as any }
+    );
+
     return res.status(200).json({
       success: true,
       message: 'Login successful',
       data: {
-        token: 'real-token', // In a real app, generate JWT here
-        refreshToken: 'real-refresh-token',
+        token: token,
+        refreshToken: refreshToken,
         user: {
           id: user.id,
           email: user.email,
@@ -207,6 +263,16 @@ app.post('/api/phishing/track/open', (req, res) => phishingController.trackEmail
 app.post('/api/phishing/track/click', (req, res) => phishingController.trackLinkClick(req, res));
 app.get('/api/phishing/campaigns/:campaignId/report', (req, res) => phishingController.generateReport(req, res));
 app.get('/api/phishing/campaigns/:campaignId/results', (req, res) => phishingController.getResultsByCampaign(req, res));
+
+// Progress tracking routes (require authentication)
+app.post('/api/progress/lesson/complete', authenticateToken, (req, res) => progressController.markLessonComplete(req, res));
+app.post('/api/progress/lesson/unmark', authenticateToken, (req, res) => progressController.unmarkLessonComplete(req, res));
+app.get('/api/progress/course/:courseId', authenticateToken, (req, res) => progressController.getCourseProgress(req, res));
+app.get('/api/progress/lesson/:lessonId', authenticateToken, (req, res) => progressController.getLessonProgress(req, res));
+app.put('/api/progress/lesson/time', authenticateToken, (req, res) => progressController.updateLessonTime(req, res));
+app.get('/api/progress/stats', authenticateToken, (req, res) => progressController.getLearningStats(req, res));
+app.get('/api/progress/next-lesson/:courseId', authenticateToken, (req, res) => progressController.getNextLesson(req, res));
+app.get('/api/progress/course/:courseId/lessons', authenticateToken, (req, res) => progressController.getCourseLessonsProgress(req, res));
 
 // Start server
 const startServer = async () => {

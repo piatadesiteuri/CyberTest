@@ -1,4 +1,4 @@
-import { query } from '../utils/DatabaseConnection';
+import DatabaseConnection from '../utils/DatabaseConnection';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface UserProgress {
@@ -40,6 +40,7 @@ export interface CreateUserProgressData {
   progressPercentage?: number;
   timeSpent?: number;
   score?: number;
+  completedAt?: Date;
 }
 
 export interface UpdateUserProgressData {
@@ -60,14 +61,16 @@ export interface CreateQuizAttemptData {
 }
 
 export class ProgressService {
+  private db = DatabaseConnection.getInstance();
+
   // User Progress Management
   async createUserProgress(data: CreateUserProgressData): Promise<UserProgress> {
     const id = uuidv4();
     const now = new Date();
     
-    await query(
-      `INSERT INTO user_progress (id, user_id, course_id, module_id, lesson_id, quiz_id, status, progress_percentage, time_spent, score, started_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    await this.db.getPool().execute(
+      `INSERT INTO user_progress (id, user_id, course_id, module_id, lesson_id, quiz_id, status, progress_percentage, time_spent, score, completed_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.userId,
@@ -79,6 +82,7 @@ export class ProgressService {
         data.progressPercentage || 0,
         data.timeSpent || 0,
         data.score || null,
+        data.completedAt || null,
         now,
         now
       ]
@@ -96,6 +100,7 @@ export class ProgressService {
       timeSpent: data.timeSpent || 0,
       score: data.score,
       startedAt: now,
+      completedAt: data.completedAt,
       updatedAt: now
     };
   }
@@ -106,7 +111,7 @@ export class ProgressService {
     
     if (fields.length === 0) return this.getUserProgressById(id);
 
-    await query(
+    await this.db.getPool().execute(
       `UPDATE user_progress SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
       [...values, id]
     );
@@ -115,11 +120,11 @@ export class ProgressService {
   }
 
   async getUserProgressById(id: string): Promise<UserProgress | null> {
-    const [rows] = await query<UserProgress[]>(
+    const [rows] = await this.db.getPool().execute(
       `SELECT * FROM user_progress WHERE id = ?`,
       [id]
     );
-    return rows[0] || null;
+    return (rows as UserProgress[])[0] || null;
   }
 
   async getUserProgress(userId: string, courseId?: string, moduleId?: string, lessonId?: string): Promise<UserProgress[]> {
@@ -141,8 +146,13 @@ export class ProgressService {
 
     sql += ` ORDER BY updated_at DESC`;
 
-    const [rows] = await query<UserProgress[]>(sql, params);
-    return rows;
+    console.log('🔍 getUserProgress SQL:', sql);
+    console.log('🔍 getUserProgress params:', params);
+
+    const [rows] = await this.db.getPool().execute(sql, params);
+    console.log('🔍 getUserProgress rows:', rows);
+    
+    return rows as UserProgress[];
   }
 
   async getUserCourseProgress(userId: string, courseId: string): Promise<{
@@ -153,44 +163,39 @@ export class ProgressService {
     totalModules: number;
     lastActivity: Date | null;
   }> {
-    // Get all lessons in the course
-    const [lessonRows] = await query<{id: string, module_id: string}[]>(
-      `SELECT l.id, l.module_id 
-       FROM lessons l 
-       JOIN modules m ON l.module_id = m.id 
-       WHERE m.course_id = ?`,
+    const db = this.db.getPool();
+
+    // Get total lessons and modules for the course
+    const [courseStatsRows] = await db.execute(
+      `SELECT 
+         COUNT(DISTINCT l.id) as totalLessons,
+         COUNT(DISTINCT m.id) as totalModules
+       FROM courses c
+       JOIN modules m ON c.id = m.course_id
+       JOIN lessons l ON m.id = l.module_id
+       WHERE c.id = ?`,
       [courseId]
     );
 
-    // Get all modules in the course
-    const [moduleRows] = await query<{id: string}[]>(
-      `SELECT id FROM modules WHERE course_id = ?`,
-      [courseId]
-    );
+    const totalLessons = (courseStatsRows as {totalLessons: number}[])[0]?.totalLessons || 0;
+    const totalModules = (courseStatsRows as {totalModules: number}[])[0]?.totalModules || 0;
 
-    // Get user progress for this course
-    const [progressRows] = await query<UserProgress[]>(
-      `SELECT * FROM user_progress 
-       WHERE user_id = ? AND course_id = ?`,
+    // Get user's completed lessons and modules for the course
+    const [userProgressRows] = await db.execute(
+      `SELECT 
+         COUNT(DISTINCT up.lesson_id) as completedLessons,
+         COUNT(DISTINCT up.module_id) as completedModules,
+         MAX(up.updated_at) as lastActivity
+       FROM user_progress up
+       WHERE up.user_id = ? AND up.course_id = ? AND up.status = 'completed' AND up.lesson_id IS NOT NULL`,
       [userId, courseId]
     );
 
-    const totalLessons = lessonRows.length;
-    const totalModules = moduleRows.length;
-    
-    const completedLessons = progressRows.filter(p => 
-      p.lessonId && p.status === 'completed'
-    ).length;
-    
-    const completedModules = progressRows.filter(p => 
-      p.moduleId && p.status === 'completed'
-    ).length;
+    const completedLessons = (userProgressRows as {completedLessons: number}[])[0]?.completedLessons || 0;
+    const completedModules = (userProgressRows as {completedModules: number}[])[0]?.completedModules || 0;
+    const lastActivity = (userProgressRows as {lastActivity: Date}[])[0]?.lastActivity || null;
 
     const overallProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-    
-    const lastActivity = progressRows.length > 0 
-      ? new Date(Math.max(...progressRows.map(p => new Date(p.updatedAt).getTime())))
-      : null;
 
     return {
       overallProgress,
@@ -208,15 +213,15 @@ export class ProgressService {
     const now = new Date();
     
     // Get the attempt number for this user and quiz
-    const [attemptRows] = await query<{attempt_number: number}[]>(
+    const [attemptRows] = await this.db.getPool().execute(
       `SELECT MAX(attempt_number) as attempt_number FROM quiz_attempts 
        WHERE user_id = ? AND quiz_id = ?`,
       [data.userId, data.quizId]
     );
     
-    const attemptNumber = (attemptRows[0]?.attempt_number || 0) + 1;
+    const attemptNumber = ((attemptRows as {attempt_number: number}[])[0]?.attempt_number || 0) + 1;
 
-    await query(
+    await this.db.getPool().execute(
       `INSERT INTO quiz_attempts (id, user_id, quiz_id, answers, score, passed, time_spent, attempt_number, completed_at, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -258,22 +263,22 @@ export class ProgressService {
 
     sql += ` ORDER BY created_at DESC`;
 
-    const [rows] = await query<QuizAttempt[]>(sql, params);
-    return rows.map(row => ({
+    const [rows] = await this.db.getPool().execute(sql, params);
+    return (rows as QuizAttempt[]).map(row => ({
       ...row,
       answers: typeof row.answers === 'string' ? JSON.parse(row.answers) : row.answers
     }));
   }
 
   async getQuizAttemptById(id: string): Promise<QuizAttempt | null> {
-    const [rows] = await query<QuizAttempt[]>(
+    const [rows] = await this.db.getPool().execute(
       `SELECT * FROM quiz_attempts WHERE id = ?`,
       [id]
     );
     
-    if (rows.length === 0) return null;
+    if ((rows as QuizAttempt[]).length === 0) return null;
     
-    const row = rows[0];
+    const row = (rows as QuizAttempt[])[0];
     return {
       ...row,
       answers: typeof row.answers === 'string' ? JSON.parse(row.answers) : row.answers
@@ -291,13 +296,13 @@ export class ProgressService {
     longestStreak: number;
   }> {
     // Get total time spent
-    const [timeRows] = await query<{total_time: number}[]>(
+    const [timeRows] = await this.db.getPool().execute(
       `SELECT SUM(time_spent) as total_time FROM user_progress WHERE user_id = ?`,
       [userId]
     );
 
     // Get completed courses
-    const [courseRows] = await query<{count: number}[]>(
+    const [courseRows] = await this.db.getPool().execute(
       `SELECT COUNT(DISTINCT course_id) as count 
        FROM user_progress 
        WHERE user_id = ? AND course_id IS NOT NULL AND status = 'completed'`,
@@ -305,7 +310,7 @@ export class ProgressService {
     );
 
     // Get completed lessons
-    const [lessonRows] = await query<{count: number}[]>(
+    const [lessonRows] = await this.db.getPool().execute(
       `SELECT COUNT(*) as count 
        FROM user_progress 
        WHERE user_id = ? AND lesson_id IS NOT NULL AND status = 'completed'`,
@@ -313,7 +318,7 @@ export class ProgressService {
     );
 
     // Get completed quizzes
-    const [quizRows] = await query<{count: number}[]>(
+    const [quizRows] = await this.db.getPool().execute(
       `SELECT COUNT(*) as count 
        FROM quiz_attempts 
        WHERE user_id = ? AND passed = true`,
@@ -321,7 +326,7 @@ export class ProgressService {
     );
 
     // Get average quiz score
-    const [scoreRows] = await query<{avg_score: number}[]>(
+    const [scoreRows] = await this.db.getPool().execute(
       `SELECT AVG(score) as avg_score 
        FROM quiz_attempts 
        WHERE user_id = ? AND passed = true`,
@@ -329,7 +334,7 @@ export class ProgressService {
     );
 
     // Get learning streak (simplified - would need more complex logic for actual streaks)
-    const [streakRows] = await query<{current_streak: number, longest_streak: number}[]>(
+    const [streakRows] = await this.db.getPool().execute(
       `SELECT 
          COUNT(DISTINCT DATE(completed_at)) as current_streak,
          MAX(consecutive_days) as longest_streak
@@ -344,13 +349,13 @@ export class ProgressService {
     );
 
     return {
-      totalTimeSpent: timeRows[0]?.total_time || 0,
-      completedCourses: courseRows[0]?.count || 0,
-      completedLessons: lessonRows[0]?.count || 0,
-      completedQuizzes: quizRows[0]?.count || 0,
-      averageQuizScore: Math.round(scoreRows[0]?.avg_score || 0),
-      currentStreak: streakRows[0]?.current_streak || 0,
-      longestStreak: streakRows[0]?.longest_streak || 0
+      totalTimeSpent: (timeRows as {total_time: number}[])[0]?.total_time || 0,
+      completedCourses: (courseRows as {count: number}[])[0]?.count || 0,
+      completedLessons: (lessonRows as {count: number}[])[0]?.count || 0,
+      completedQuizzes: (quizRows as {count: number}[])[0]?.count || 0,
+      averageQuizScore: Math.round((scoreRows as {avg_score: number}[])[0]?.avg_score || 0),
+      currentStreak: (streakRows as {current_streak: number, longest_streak: number}[])[0]?.current_streak || 0,
+      longestStreak: (streakRows as {current_streak: number, longest_streak: number}[])[0]?.longest_streak || 0
     };
   }
 
@@ -361,14 +366,7 @@ export class ProgressService {
     lessonTitle: string;
     moduleTitle: string;
   } | null> {
-    const [rows] = await query<{
-      lesson_id: string;
-      module_id: string;
-      lesson_title: string;
-      module_title: string;
-      order_index: number;
-      lesson_order: number;
-    }[]>(
+    const [rows] = await this.db.getPool().execute(
       `SELECT l.id as lesson_id, l.module_id, l.title as lesson_title, m.title as module_title, m.order_index, l.order_index as lesson_order
        FROM lessons l
        JOIN modules m ON l.module_id = m.id
@@ -382,14 +380,85 @@ export class ProgressService {
       [courseId, userId]
     );
 
-    if (rows.length === 0) return null;
+    if ((rows as any[]).length === 0) return null;
 
-    const row = rows[0];
+    const row = (rows as any[])[0];
     return {
       lessonId: row.lesson_id,
       moduleId: row.module_id,
       lessonTitle: row.lesson_title,
       moduleTitle: row.module_title
     };
+  }
+
+  // Mark lesson as completed
+  async markLessonComplete(userId: string, lessonId: string, courseId: string, moduleId: string, timeSpent: number = 0): Promise<UserProgress> {
+    const db = DatabaseConnection.getInstance().getPool();
+    
+    // Check if progress already exists
+    const existingProgress = await this.getUserProgress(
+      userId,
+      courseId,
+      moduleId,
+      lessonId
+    );
+
+    if (existingProgress.length > 0) {
+      // Update existing progress
+      const updatedProgress = await this.updateUserProgress(existingProgress[0].id, {
+        status: 'completed',
+        progressPercentage: 100,
+        timeSpent: timeSpent,
+        completedAt: new Date()
+      });
+      
+      if (!updatedProgress) {
+        throw new Error('Failed to update progress');
+      }
+      
+      return updatedProgress;
+    } else {
+      // Create new progress
+      return await this.createUserProgress({
+        userId,
+        courseId,
+        moduleId,
+        lessonId,
+        status: 'completed',
+        progressPercentage: 100,
+        timeSpent: timeSpent,
+        completedAt: new Date()
+      });
+    }
+  }
+
+  // Unmark lesson as completed
+  async unmarkLessonComplete(userId: string, lessonId: string): Promise<boolean> {
+    const db = DatabaseConnection.getInstance().getPool();
+    
+    try {
+      // Find the progress record for this lesson
+      const [rows] = await db.execute(
+        `SELECT id FROM user_progress WHERE user_id = ? AND lesson_id = ? AND status = 'completed'`,
+        [userId, lessonId]
+      );
+
+      if ((rows as any[]).length === 0) {
+        return false; // No completed progress found
+      }
+
+      const progressId = (rows as any[])[0].id;
+
+      // Delete the progress record
+      await db.execute(
+        `DELETE FROM user_progress WHERE id = ?`,
+        [progressId]
+      );
+
+      return true;
+    } catch (error) {
+      console.error('Error unmarking lesson:', error);
+      return false;
+    }
   }
 }
