@@ -1,14 +1,25 @@
 'use client'
 
-import { Menu, Bell, User, Shield } from 'lucide-react'
+import { Menu, Bell, User, Shield, LogOut } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 
 interface DashboardHeaderProps {
   onMenuClick: () => void
 }
 
 export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+      router.push('/auth')
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+  }
   return (
     <header className="header-gradient shadow-lg">
       <div className="px-6 py-4">
@@ -54,6 +65,13 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                   {user?.role?.replace('_', ' ')}
                 </p>
               </div>
+              <button
+                onClick={handleLogout}
+                className="bg-white/10 hover:bg-white/20 p-2 rounded-lg transition-colors group"
+                title="Logout"
+              >
+                <LogOut className="h-5 w-5 text-white group-hover:text-red-200 transition-colors" />
+              </button>
             </div>
           </div>
         </div>
