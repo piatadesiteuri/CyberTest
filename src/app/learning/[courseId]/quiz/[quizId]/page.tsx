@@ -55,6 +55,8 @@ export default function QuizPage() {
   const [showResults, setShowResults] = useState(false)
   const [quizResult, setQuizResult] = useState<QuizAttempt | null>(null)
   const [attempts, setAttempts] = useState(0)
+  const [retakeTimer, setRetakeTimer] = useState(0)
+  const [canRetake, setCanRetake] = useState(true)
 
   useEffect(() => {
     // Mock data - replace with actual API call
@@ -137,6 +139,7 @@ export default function QuizPage() {
 
     setQuiz(mockQuiz)
     setTimeLeft(mockQuiz.timeLimit * 60) // Convert to seconds
+    setRetakeTimer(15 * 60) // 15 minutes for retake
     setLoading(false)
   }, [quizId])
 
@@ -150,6 +153,18 @@ export default function QuizPage() {
       handleSubmit()
     }
   }, [timeLeft, isSubmitted])
+
+  // Retake timer
+  useEffect(() => {
+    if (retakeTimer > 0 && !canRetake) {
+      const timer = setTimeout(() => {
+        setRetakeTimer(retakeTimer - 1)
+      }, 1000)
+      return () => clearTimeout(timer)
+    } else if (retakeTimer === 0 && !canRetake) {
+      setCanRetake(true)
+    }
+  }, [retakeTimer, canRetake])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -222,18 +237,28 @@ export default function QuizPage() {
       setShowResults(true)
       setAttempts(prev => prev + 1)
       
+      // Start retake timer if failed
+      if (!passed) {
+        setCanRetake(false)
+        setRetakeTimer(15 * 60) // 15 minutes
+      }
+      
     } catch (error) {
       console.error('Error submitting quiz:', error)
     }
   }
 
   const handleRetake = () => {
+    if (!canRetake) return
+    
     setAnswers({})
     setCurrentQuestionIndex(0)
     setTimeLeft(quiz?.timeLimit * 60 || 0)
     setIsSubmitted(false)
     setShowResults(false)
     setQuizResult(null)
+    setCanRetake(false)
+    setRetakeTimer(15 * 60) // Reset retake timer
   }
 
   const handleNext = () => {
@@ -335,73 +360,33 @@ export default function QuizPage() {
               </p>
             </div>
 
-            {/* Question Results */}
+            {/* Question Results - Only show correct count */}
             <div className="space-y-6 mb-8">
-              <h3 className="text-xl font-bold text-gray-900">Question Review</h3>
-              {quiz.questions.map((question, index) => {
-                const userAnswer = answers[question.id]
-                const correctAnswer = question.answers.find(a => a.isCorrect)
-                const isCorrect = question.type === 'multiple_choice' 
-                  ? question.answers.filter(a => a.isCorrect).every(a => 
-                      Array.isArray(userAnswer) && userAnswer.includes(a.text)
-                    ) && question.answers.filter(a => a.isCorrect).length === (Array.isArray(userAnswer) ? userAnswer.length : 0)
-                  : userAnswer === correctAnswer?.text
-
-                return (
-                  <div key={question.id} className="border border-gray-200 rounded-lg p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <h4 className="font-semibold text-gray-900">
-                        Question {index + 1}: {question.text}
-                      </h4>
-                      <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {isCorrect ? 'Correct' : 'Incorrect'}
-                      </div>
+              <h3 className="text-xl font-bold text-gray-900">Quiz Summary</h3>
+              <div className="bg-gray-50 rounded-lg p-6">
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <div className="text-3xl font-bold text-warm-copper">
+                      {quiz.questions.filter((question, index) => {
+                        const userAnswer = answers[question.id]
+                        const correctAnswer = question.answers.find(a => a.isCorrect)
+                        return question.type === 'multiple_choice' 
+                          ? question.answers.filter(a => a.isCorrect).every(a => 
+                              Array.isArray(userAnswer) && userAnswer.includes(a.text)
+                            ) && question.answers.filter(a => a.isCorrect).length === (Array.isArray(userAnswer) ? userAnswer.length : 0)
+                          : userAnswer === correctAnswer?.text
+                      }).length}
                     </div>
-                    
-                    <div className="space-y-2">
-                      {question.answers.map((answer, answerIndex) => (
-                        <div key={answerIndex} className={`p-3 rounded-lg border ${
-                          answer.isCorrect 
-                            ? 'bg-green-50 border-green-200' 
-                            : (Array.isArray(userAnswer) ? userAnswer.includes(answer.text) : userAnswer === answer.text)
-                              ? 'bg-red-50 border-red-200'
-                              : 'bg-gray-50 border-gray-200'
-                        }`}>
-                          <div className="flex items-center space-x-2">
-                            <span className={`w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold ${
-                              answer.isCorrect 
-                                ? 'bg-green-500 text-white' 
-                                : (Array.isArray(userAnswer) ? userAnswer.includes(answer.text) : userAnswer === answer.text)
-                                  ? 'bg-red-500 text-white'
-                                  : 'bg-gray-300 text-gray-600'
-                            }`}>
-                              {answer.isCorrect ? '✓' : '✗'}
-                            </span>
-                            <span className={answer.isCorrect ? 'text-green-800 font-medium' : 'text-gray-700'}>
-                              {answer.text}
-                            </span>
-                          </div>
-                          {answer.explanation && (
-                            <p className="text-sm text-gray-600 mt-2 ml-6">
-                              {answer.explanation}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {question.explanation && (
-                      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p className="text-sm text-blue-800">
-                          <strong>Explanation:</strong> {question.explanation}
-                        </p>
-                      </div>
-                    )}
+                    <div className="text-sm text-gray-600">Correct Answers</div>
                   </div>
-                )
-              })}
+                  <div>
+                    <div className="text-3xl font-bold text-gray-600">
+                      {quiz.questions.length}
+                    </div>
+                    <div className="text-sm text-gray-600">Total Questions</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Actions */}
@@ -409,10 +394,17 @@ export default function QuizPage() {
               {!quizResult.passed && attempts < quiz.maxAttempts && (
                 <button
                   onClick={handleRetake}
-                  className="bg-warm-copper text-white px-6 py-3 rounded-lg hover:bg-warm-bronze transition-colors flex items-center space-x-2"
+                  disabled={!canRetake}
+                  className={`px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors ${
+                    canRetake 
+                      ? 'bg-warm-copper text-white hover:bg-warm-bronze' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
                   <RotateCcw className="w-4 h-4" />
-                  <span>Retake Quiz</span>
+                  <span>
+                    {canRetake ? 'Retake Quiz' : `Retake in ${formatTime(retakeTimer)}`}
+                  </span>
                 </button>
               )}
               <button

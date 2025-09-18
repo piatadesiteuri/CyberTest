@@ -198,15 +198,17 @@ Attacks targeting network infrastructure and communications.
       ]
     }
 
-    const foundLesson = course.modules
-      .flatMap(module => module.lessons)
-      .find(l => l.id === lessonId)
+    if (course) {
+      const foundLesson = course.modules
+        .flatMap(module => module.lessons)
+        .find(l => l.id === lessonId)
 
-    if (foundLesson) {
-      setLesson(foundLesson)
-      setCourse(course)
-      setTimeSpent(foundLesson.userProgress?.timeSpent || 0)
-      setIsCompleted(foundLesson.userProgress?.status === 'completed')
+      if (foundLesson) {
+        setLesson(foundLesson)
+        setCourse(course)
+        setTimeSpent(foundLesson.userProgress?.timeSpent || 0)
+        setIsCompleted(foundLesson.userProgress?.status === 'completed')
+      }
     }
     
     setLoading(false)
