@@ -20,7 +20,7 @@ export default function HeroSection() {
         </p>
         
         {/* CTA Button */}
-         <Link href="/dashboard" className="inline-block bg-white text-harmony-dark hover:bg-harmony-cream font-bold py-4 px-8 rounded-lg text-lg transition-colors shadow-lg hover:shadow-xl mb-12">
+-        <Link href="/dashboard" className="inline-block bg-white text-harmony-dark hover:bg-harmony-cream font-bold py-4 px-8 rounded-lg text-lg transition-colors shadow-lg hover:shadow-xl mb-12">
           Access Dashboard
           <ArrowRight className="inline ml-2 h-5 w-5" />
         </Link>
