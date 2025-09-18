@@ -79,7 +79,9 @@ export class CourseController {
   async getCourseById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      console.log(`🚀 Starting getCourseById for course: ${id}`);
       const connection = await this.getConnection();
+      console.log(`🔌 Database connection established`);
       
       // Get course
       const [courses] = await connection.query(`
