@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardHeader from './DashboardHeader'
 import { BookOpen, Trophy, Clock, Star, ChevronRight, Play, CheckCircle, Lock, Users, Target, Zap } from 'lucide-react'
@@ -13,6 +14,11 @@ import CyberTraining from './icons/CyberTraining'
 
 export default function UserDashboard() {
   const { user } = useAuth()
+  const router = useRouter()
+
+  const handleCourseClick = (courseId: string) => {
+    router.push(`/learning/${courseId}`)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-harmony-cream via-white to-harmony-tan">
@@ -94,7 +100,10 @@ export default function UserDashboard() {
                   <span>•</span>
                   <span>4 Quizzes</span>
                 </div>
-                <button className="bg-harmony-dark text-white px-6 py-2 rounded-lg hover:bg-harmony-dark/90 transition-colors flex items-center">
+                <button 
+                  onClick={() => handleCourseClick('foundation')}
+                  className="bg-harmony-dark text-white px-6 py-2 rounded-lg hover:bg-harmony-dark/90 transition-colors flex items-center"
+                >
                   Continue
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </button>
@@ -124,7 +133,11 @@ export default function UserDashboard() {
                   <span>•</span>
                   <span>6 Labs</span>
                 </div>
-                <button className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors flex items-center">
+                <button 
+                  onClick={() => handleCourseClick('advanced')}
+                  className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors flex items-center cursor-not-allowed"
+                  disabled
+                >
                   Locked
                   <Lock className="w-4 h-4 ml-1" />
                 </button>
@@ -154,7 +167,11 @@ export default function UserDashboard() {
                   <span>•</span>
                   <span>3 Case Studies</span>
                 </div>
-                <button className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors flex items-center">
+                <button 
+                  onClick={() => handleCourseClick('management')}
+                  className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors flex items-center cursor-not-allowed"
+                  disabled
+                >
                   Locked
                   <Lock className="w-4 h-4 ml-1" />
                 </button>
@@ -306,15 +323,24 @@ export default function UserDashboard() {
             hands-on labs, or real-world simulations.
           </p>
           <div className="flex flex-wrap gap-4">
-            <button className="bg-white text-harmony-dark px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center">
+            <button 
+              onClick={() => handleCourseClick('foundation')}
+              className="bg-white text-harmony-dark px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center"
+            >
               <CyberTraining className="w-5 h-5 mr-2" />
               Resume Training
             </button>
-            <button className="bg-white/20 text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/30 transition-colors flex items-center">
+            <button 
+              onClick={() => handleCourseClick('foundation')}
+              className="bg-white/20 text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/30 transition-colors flex items-center"
+            >
               <PhishingHook className="w-5 h-5 mr-2" />
               Take Simulation
             </button>
-            <button className="bg-white/20 text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/30 transition-colors flex items-center">
+            <button 
+              onClick={() => handleCourseClick('foundation')}
+              className="bg-white/20 text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/30 transition-colors flex items-center"
+            >
               <BookOpen className="w-5 h-5 mr-2" />
               Browse Modules
             </button>
