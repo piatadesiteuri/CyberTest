@@ -3,7 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
-import { CourseController } from './controllers/CourseController';
+import { CourseController } from './controllers/CourseController'
+import { PhishingController } from './controllers/PhishingController';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ const dbConfig = {
 
 let db: mysql.Connection | null = null;
 const courseController = new CourseController();
+const phishingController = new PhishingController();
 
 // Connect to database
 const connectDB = async () => {
@@ -193,6 +195,18 @@ app.post('/api/auth/login', async (req, res) => {
 // Course routes
 app.get('/api/courses', (req, res) => courseController.getCourses(req, res));
 app.get('/api/courses/:id', (req, res) => courseController.getCourseById(req, res));
+
+// Phishing simulation routes
+app.post('/api/phishing/campaigns', (req, res) => phishingController.createCampaign(req, res));
+app.get('/api/phishing/campaigns', (req, res) => phishingController.getCampaigns(req, res));
+app.get('/api/phishing/campaigns/:id', (req, res) => phishingController.getCampaignById(req, res));
+app.post('/api/phishing/templates', (req, res) => phishingController.createTemplate(req, res));
+app.get('/api/phishing/campaigns/:campaignId/templates', (req, res) => phishingController.getTemplatesByCampaign(req, res));
+app.post('/api/phishing/send', (req, res) => phishingController.sendPhishingEmail(req, res));
+app.post('/api/phishing/track/open', (req, res) => phishingController.trackEmailOpen(req, res));
+app.post('/api/phishing/track/click', (req, res) => phishingController.trackLinkClick(req, res));
+app.get('/api/phishing/campaigns/:campaignId/report', (req, res) => phishingController.generateReport(req, res));
+app.get('/api/phishing/campaigns/:campaignId/results', (req, res) => phishingController.getResultsByCampaign(req, res));
 
 // Start server
 const startServer = async () => {
