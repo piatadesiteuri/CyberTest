@@ -11,8 +11,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    // Clean up corrupted localStorage data
+    try {
+      const userStr = localStorage.getItem('user')
+      if (userStr === 'undefined' || userStr === 'null') {
+        console.log('Cleaning up corrupted localStorage data')
+        localStorage.removeItem('user')
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
+      }
+    } catch (error) {
+      console.log('Error cleaning localStorage:', error)
+      // If localStorage is corrupted, clear everything
+      localStorage.clear()
+    }
+    
     // Check if user is already logged in
     const currentUser = authService.getCurrentUser()
+    console.log('AuthContext useEffect - currentUser:', currentUser)
+    console.log('AuthContext useEffect - isAuthenticated:', authService.isAuthenticated())
     if (currentUser && authService.isAuthenticated()) {
       setUser(currentUser)
     }
@@ -23,6 +40,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true)
       const response = await authService.login(credentials)
+      console.log('AuthContext login - response:', response)
+      console.log('AuthContext login - setting user:', response.user)
       setUser(response.user)
       return response
     } catch (error) {

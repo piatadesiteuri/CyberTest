@@ -7,6 +7,11 @@ import UserDashboard from '@/components/UserDashboard'
 export default function DashboardPage() {
   const { user, isLoading, isAdmin } = useAuth()
 
+  // Debug logging
+  console.log('DashboardPage - user:', user)
+  console.log('DashboardPage - isLoading:', isLoading)
+  console.log('DashboardPage - isAdmin():', isAdmin())
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

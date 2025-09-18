@@ -21,11 +21,11 @@ class AuthService {
       const data = await response.json()
       
       // Store tokens in localStorage
-      localStorage.setItem('accessToken', data.token)
-      localStorage.setItem('refreshToken', data.refreshToken)
-      localStorage.setItem('user', JSON.stringify(data.user))
+      localStorage.setItem('accessToken', data.data.token)
+      localStorage.setItem('refreshToken', data.data.refreshToken)
+      localStorage.setItem('user', JSON.stringify(data.data.user))
 
-      return data
+      return data.data
     } catch (error) {
       console.error('Login error:', error)
       throw error
@@ -50,11 +50,11 @@ class AuthService {
       const data = await response.json()
       
       // Store tokens in localStorage
-      localStorage.setItem('accessToken', data.token)
-      localStorage.setItem('refreshToken', data.refreshToken)
-      localStorage.setItem('user', JSON.stringify(data.user))
+      localStorage.setItem('accessToken', data.data.token)
+      localStorage.setItem('refreshToken', data.data.refreshToken)
+      localStorage.setItem('user', JSON.stringify(data.data.user))
 
-      return data
+      return data.data
     } catch (error) {
       console.error('Registration error:', error)
       throw error
@@ -117,7 +117,10 @@ class AuthService {
   getCurrentUser(): User | null {
     try {
       const userStr = localStorage.getItem('user')
-      return userStr ? JSON.parse(userStr) : null
+      if (!userStr || userStr === 'undefined' || userStr === 'null') {
+        return null
+      }
+      return JSON.parse(userStr)
     } catch (error) {
       console.error('Error parsing user data:', error)
       return null
@@ -125,7 +128,8 @@ class AuthService {
   }
 
   getAccessToken(): string | null {
-    return localStorage.getItem('accessToken')
+    const token = localStorage.getItem('accessToken')
+    return token && token !== 'undefined' && token !== 'null' ? token : null
   }
 
   isAuthenticated(): boolean {

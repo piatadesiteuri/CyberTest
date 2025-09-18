@@ -27,8 +27,10 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
     try {
       const response = await login(formData)
-      // Redirect to dashboard after successful login
-      router.push('/dashboard')
+      // Small delay to allow context to update
+      setTimeout(() => {
+        router.replace('/dashboard')
+      }, 100)
     } catch (error: any) {
       console.error('Login error:', error)
       // Error handled by context
