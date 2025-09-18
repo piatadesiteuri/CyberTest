@@ -20,6 +20,12 @@ export default function UserDashboard() {
     router.push(`/learning/${courseId}`)
   }
 
+  const handleResumeTraining = () => {
+    // Logic to find the next incomplete lesson
+    // For now, redirect to the first lesson of foundation course
+    router.push('/learning/foundation/lesson/1-3') // Security Best Practices lesson
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-harmony-cream via-white to-harmony-tan">
       {/* Header */}
@@ -324,7 +330,7 @@ export default function UserDashboard() {
           </p>
           <div className="flex flex-wrap gap-4">
             <button 
-              onClick={() => handleCourseClick('foundation')}
+              onClick={handleResumeTraining}
               className="bg-white text-harmony-dark px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center"
             >
               <CyberTraining className="w-5 h-5 mr-2" />

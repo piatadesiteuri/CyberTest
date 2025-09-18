@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { BookOpen, Clock, CheckCircle, Lock, Play, ChevronRight, Trophy, Users, Target } from 'lucide-react'
 
@@ -70,6 +70,7 @@ interface Question {
 export default function CoursePage() {
   const { courseId } = useParams()
   const { user } = useAuth()
+  const router = useRouter()
   const [course, setCourse] = useState<Course | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedModule, setSelectedModule] = useState<Module | null>(null)
@@ -415,7 +416,10 @@ export default function CoursePage() {
                           <div className="flex items-center space-x-2">
                             <span className="text-xs text-gray-500 capitalize">{lesson.type}</span>
                             <span className="text-xs text-gray-500">{lesson.estimatedDuration} min</span>
-                            <button className="text-warm-copper hover:text-warm-bronze transition-colors">
+                            <button 
+                              onClick={() => router.push(`/learning/${courseId}/lesson/${lesson.id}`)}
+                              className="text-warm-copper hover:text-warm-bronze transition-colors"
+                            >
                               <ChevronRight className="w-4 h-4" />
                             </button>
                           </div>
@@ -435,7 +439,10 @@ export default function CoursePage() {
                           <div className="flex items-center space-x-2">
                             <span className="text-xs text-gray-500">{module.quiz.timeLimit} min</span>
                             <span className="text-xs text-gray-500">{module.quiz.passingScore}% to pass</span>
-                            <button className="bg-warm-copper text-white px-3 py-1 rounded text-sm hover:bg-warm-bronze transition-colors">
+                            <button 
+                              onClick={() => router.push(`/learning/${courseId}/quiz/${module.quiz.id}`)}
+                              className="bg-warm-copper text-white px-3 py-1 rounded text-sm hover:bg-warm-bronze transition-colors"
+                            >
                               Start Quiz
                             </button>
                           </div>
