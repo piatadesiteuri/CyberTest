@@ -74,7 +74,7 @@ export default function UserDashboard() {
             {/* Foundation Path */}
             <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 hover:shadow-xl transition-shadow">
               <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-warm-copper to-warm-bronze rounded-xl flex items-center justify-center">
                   <CyberShield className="w-6 h-6 text-white" />
                 </div>
                 <div className="text-right">
@@ -104,7 +104,7 @@ export default function UserDashboard() {
             {/* Advanced Path */}
             <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 hover:shadow-xl transition-shadow">
               <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-warm-amber to-warm-copper rounded-xl flex items-center justify-center">
                   <ThreatDetection className="w-6 h-6 text-white" />
                 </div>
                 <div className="text-right">
@@ -134,7 +134,7 @@ export default function UserDashboard() {
             {/* Management Path */}
             <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 hover:shadow-xl transition-shadow">
               <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-warm-bronze to-warm-copper rounded-xl flex items-center justify-center">
                   <NetworkSecurity className="w-6 h-6 text-white" />
                 </div>
                 <div className="text-right">
@@ -169,9 +169,9 @@ export default function UserDashboard() {
           
           <div className="space-y-6">
             {/* Module 1 */}
-            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border border-green-200">
+            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-warm-copper/10 to-warm-copper/20 rounded-xl border border-warm-copper/30">
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-warm-copper rounded-full flex items-center justify-center">
                   <CheckCircle className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -180,15 +180,15 @@ export default function UserDashboard() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-green-600 font-semibold">Completed</div>
+                <div className="text-warm-copper font-semibold">Completed</div>
                 <div className="text-sm text-gray-500">100%</div>
               </div>
             </div>
 
             {/* Module 2 */}
-            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-warm-amber/10 to-warm-amber/20 rounded-xl border border-warm-amber/30">
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-warm-amber rounded-full flex items-center justify-center">
                   <PhishingHook className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -197,15 +197,15 @@ export default function UserDashboard() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-blue-600 font-semibold">In Progress</div>
+                <div className="text-warm-amber font-semibold">In Progress</div>
                 <div className="text-sm text-gray-500">65%</div>
               </div>
             </div>
 
             {/* Module 3 */}
-            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-warm-brass/10 to-warm-brass/20 rounded-xl border border-warm-brass/30">
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gray-400 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-warm-brass rounded-full flex items-center justify-center">
                   <SecurityLock className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -214,7 +214,7 @@ export default function UserDashboard() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-gray-500 font-semibold">Locked</div>
+                <div className="text-warm-brass font-semibold">Locked</div>
                 <div className="text-sm text-gray-500">Complete previous module</div>
               </div>
             </div>
@@ -227,22 +227,22 @@ export default function UserDashboard() {
           <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Achievements</h2>
             <div className="space-y-4">
-              <div className="flex items-center space-x-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                <Trophy className="w-8 h-8 text-yellow-600" />
+              <div className="flex items-center space-x-4 p-4 bg-warm-gold/10 rounded-lg border border-warm-gold/30">
+                <Trophy className="w-8 h-8 text-warm-gold" />
                 <div>
                   <h3 className="font-semibold text-gray-900">First Quiz Master</h3>
                   <p className="text-gray-600 text-sm">Scored 100% on your first security quiz</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <Star className="w-8 h-8 text-blue-600" />
+              <div className="flex items-center space-x-4 p-4 bg-warm-honey/10 rounded-lg border border-warm-honey/30">
+                <Star className="w-8 h-8 text-warm-honey" />
                 <div>
                   <h3 className="font-semibold text-gray-900">Consistent Learner</h3>
                   <p className="text-gray-600 text-sm">Completed 5 consecutive days of training</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                <Zap className="w-8 h-8 text-green-600" />
+              <div className="flex items-center space-x-4 p-4 bg-warm-sunset/10 rounded-lg border border-warm-sunset/30">
+                <Zap className="w-8 h-8 text-warm-sunset" />
                 <div>
                   <h3 className="font-semibold text-gray-900">Quick Learner</h3>
                   <p className="text-gray-600 text-sm">Finished a module in record time</p>
@@ -255,42 +255,42 @@ export default function UserDashboard() {
           <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Department Leaderboard</h2>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg border border-yellow-200">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-warm-gold/10 to-warm-gold/20 rounded-lg border border-warm-gold/30">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold">1</div>
+                  <div className="w-8 h-8 bg-warm-gold rounded-full flex items-center justify-center text-white font-bold">1</div>
                   <div>
                     <h3 className="font-semibold text-gray-900">Sarah Johnson</h3>
                     <p className="text-gray-600 text-sm">IT Department</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-yellow-600">2,450</div>
+                  <div className="text-2xl font-bold text-warm-gold">2,450</div>
                   <div className="text-sm text-gray-500">points</div>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-warm-brass/10 to-warm-brass/20 rounded-lg border border-warm-brass/30">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">2</div>
+                  <div className="w-8 h-8 bg-warm-brass rounded-full flex items-center justify-center text-white font-bold">2</div>
                   <div>
                     <h3 className="font-semibold text-gray-900">Mike Chen</h3>
                     <p className="text-gray-600 text-sm">Finance Department</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-600">2,180</div>
+                  <div className="text-2xl font-bold text-warm-brass">2,180</div>
                   <div className="text-sm text-gray-500">points</div>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border border-orange-200">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-warm-bronze/10 to-warm-bronze/20 rounded-lg border border-warm-bronze/30">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">3</div>
+                  <div className="w-8 h-8 bg-warm-bronze rounded-full flex items-center justify-center text-white font-bold">3</div>
                   <div>
                     <h3 className="font-semibold text-gray-900">You</h3>
                     <p className="text-gray-600 text-sm">{user?.department} Department</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-orange-600">1,920</div>
+                  <div className="text-2xl font-bold text-warm-bronze">1,920</div>
                   <div className="text-sm text-gray-500">points</div>
                 </div>
               </div>

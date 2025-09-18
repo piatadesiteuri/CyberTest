@@ -1,6 +1,10 @@
 'use client'
 
-import { Menu, Bell, User, Shield, LogOut } from 'lucide-react'
+import { Shield } from 'lucide-react'
+import CyberMenu from './icons/CyberMenu'
+import CyberBell from './icons/CyberBell'
+import CyberUser from './icons/CyberUser'
+import CyberLogout from './icons/CyberLogout'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 
@@ -30,7 +34,7 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               onClick={onMenuClick}
               className="lg:hidden text-white hover:text-harmony-cream transition-colors"
             >
-              <Menu className="h-6 w-6" />
+              <CyberMenu className="h-6 w-6" />
             </button>
             
             <div className="flex items-center space-x-3">
@@ -48,14 +52,14 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <div className="flex items-center space-x-4">
             {/* Notifications */}
             <button className="relative p-2 text-white hover:text-harmony-cream transition-colors">
-              <Bell className="h-6 w-6" />
-              <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+              <CyberBell className="h-6 w-6" />
+              <span className="absolute top-0 right-0 h-2 w-2 bg-warm-sunset rounded-full"></span>
             </button>
 
             {/* User Profile */}
             <div className="flex items-center space-x-3">
               <div className="bg-white/20 p-2 rounded-full">
-                <User className="h-6 w-6 text-white" />
+                <CyberUser className="h-6 w-6 text-white" />
               </div>
               <div className="hidden md:block">
                 <p className="text-sm font-medium text-white">
@@ -70,7 +74,7 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 className="bg-white/10 hover:bg-white/20 p-2 rounded-lg transition-colors group"
                 title="Logout"
               >
-                <LogOut className="h-5 w-5 text-white group-hover:text-red-200 transition-colors" />
+                <CyberLogout className="h-5 w-5 text-white group-hover:text-warm-sunset transition-colors" />
               </button>
             </div>
           </div>
