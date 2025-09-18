@@ -428,10 +428,18 @@ export default function QuizPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => router.push(`/learning/${courseId}`)}
-                className="flex items-center text-gray-600 hover:text-warm-copper transition-colors"
+                onClick={() => router.push('/dashboard')}
+                className="flex items-center text-gray-500 hover:text-warm-copper transition-colors group"
               >
-                <ArrowLeft className="w-5 h-5 mr-2" />
+                <ArrowLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+                <span className="text-sm">Dashboard</span>
+              </button>
+              <div className="h-4 w-px bg-gray-300"></div>
+              <button
+                onClick={() => router.push(`/learning/${courseId}`)}
+                className="flex items-center text-gray-600 hover:text-warm-copper transition-colors group"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
                 Back to Course
               </button>
               <div className="h-6 w-px bg-gray-300"></div>

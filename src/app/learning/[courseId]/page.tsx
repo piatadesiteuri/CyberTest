@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { BookOpen, Clock, CheckCircle, Lock, Play, ChevronRight, Trophy, Users, Target } from 'lucide-react'
+import { BookOpen, Clock, CheckCircle, Lock, Play, ChevronRight, Trophy, Users, Target, ArrowLeft } from 'lucide-react'
 
 interface Course {
   id: string
@@ -77,20 +77,28 @@ export default function CoursePage() {
 
   useEffect(() => {
     const fetchCourse = async () => {
+      console.log('🔍 Fetching course with ID:', courseId)
       try {
         const response = await fetch(`http://localhost:3001/api/courses/${courseId}`)
+        console.log('📡 Response status:', response.status)
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch course')
+          throw new Error(`Failed to fetch course: ${response.status}`)
         }
+        
         const data = await response.json()
+        console.log('📊 Response data:', data)
+        
         if (data.success) {
+          console.log('✅ Course data received:', data.course)
           setCourse(data.course)
+          setLoading(false)
+          console.log('🔄 Loading set to false, course set to:', data.course)
         } else {
           throw new Error(data.message || 'Failed to fetch course')
         }
       } catch (error) {
-        console.error('Error fetching course:', error)
-        // Show error instead of fallback to mock data
+        console.error('❌ Error fetching course:', error)
         setCourse(null)
         setLoading(false)
         return
@@ -100,7 +108,10 @@ export default function CoursePage() {
     fetchCourse()
   }, [courseId])
 
+  console.log('🎯 Component state - loading:', loading, 'course:', course)
+
   if (loading) {
+    console.log('⏳ Showing loading state')
     return (
       <div className="min-h-screen bg-gradient-to-br from-harmony-cream via-white to-harmony-tan flex items-center justify-center">
         <div className="text-center">
@@ -112,6 +123,7 @@ export default function CoursePage() {
   }
 
   if (!course) {
+    console.log('❌ No course data - showing error state')
     return (
       <div className="min-h-screen bg-gradient-to-br from-harmony-cream via-white to-harmony-tan flex items-center justify-center">
         <div className="text-center">
@@ -121,6 +133,8 @@ export default function CoursePage() {
       </div>
     )
   }
+
+  console.log('✅ Rendering course page with data:', course)
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -153,6 +167,16 @@ export default function CoursePage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="mb-6">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="flex items-center text-gray-600 hover:text-warm-copper transition-colors group"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+              <span className="font-medium">Back to Dashboard</span>
+            </button>
+          </div>
+          
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-gradient-to-br from-warm-copper to-warm-bronze rounded-xl flex items-center justify-center">

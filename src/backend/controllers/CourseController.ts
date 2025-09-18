@@ -13,7 +13,20 @@ export class CourseController {
     });
   }
 
-  async getCourses(req: Request, res: Response) {
+  private parseJsonField(field: any): any[] {
+    if (!field) return [];
+    if (typeof field === 'string') {
+      try {
+        return JSON.parse(field);
+      } catch (e) {
+        // If it's not valid JSON, treat as plain text and split by commas
+        return field.split(',').map((item: string) => item.trim()).filter((item: string) => item);
+      }
+    }
+    return Array.isArray(field) ? field : [];
+  }
+
+  async getCourses(req: Request, res: Response): Promise<void> {
     try {
       const connection = await this.getConnection();
       
@@ -40,8 +53,8 @@ export class CourseController {
         level: course.level,
         status: course.status,
         estimatedDuration: course.estimated_duration,
-        learningObjectives: JSON.parse(course.learning_objectives || '[]'),
-        tags: JSON.parse(course.tags || '[]'),
+        learningObjectives: this.parseJsonField(course.learning_objectives),
+        tags: this.parseJsonField(course.tags),
         isActive: course.is_active,
         createdBy: course.created_by,
         createdAt: course.created_at,
@@ -63,7 +76,7 @@ export class CourseController {
     }
   }
 
-  async getCourseById(req: Request, res: Response) {
+  async getCourseById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const connection = await this.getConnection();
@@ -79,10 +92,11 @@ export class CourseController {
 
       if (courses.length === 0) {
         await connection.end();
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Course not found'
         });
+        return;
       }
 
       const course = courses[0];
@@ -163,7 +177,7 @@ export class CourseController {
               quizId: question.quiz_id,
               text: question.text,
               type: question.type,
-              answers: JSON.parse(question.answers || '[]'),
+              answers: this.parseJsonField(question.answers),
               explanation: question.explanation,
               points: question.points,
               order: question.order,
@@ -182,8 +196,8 @@ export class CourseController {
         level: course.level,
         status: course.status,
         estimatedDuration: course.estimated_duration,
-        learningObjectives: JSON.parse(course.learning_objectives || '[]'),
-        tags: JSON.parse(course.tags || '[]'),
+        learningObjectives: this.parseJsonField(course.learning_objectives),
+        tags: this.parseJsonField(course.tags),
         isActive: course.is_active,
         createdBy: course.created_by,
         createdAt: course.created_at,

@@ -45,173 +45,51 @@ export default function LessonPage() {
   const [isPlaying, setIsPlaying] = useState(false)
 
   useEffect(() => {
-    // Mock data - replace with actual API call
-    const mockCourse: Course = {
-      id: courseId as string,
-      title: 'Cybersecurity Fundamentals',
-      modules: [
-        {
-          id: '1',
-          title: 'Introduction to Cybersecurity',
-          order: 1,
-          lessons: [
-            {
-              id: '1-1',
-              title: 'What is Cybersecurity?',
-              description: 'Introduction to cybersecurity concepts and importance',
-              content: `
-# What is Cybersecurity?
-
-Cybersecurity is the practice of protecting systems, networks, and programs from digital attacks. These cyberattacks are usually aimed at accessing, changing, or destroying sensitive information; extorting money from users; or interrupting normal business processes.
-
-## Key Concepts
-
-### The CIA Triad
-- **Confidentiality**: Ensuring that information is not disclosed to unauthorized individuals
-- **Integrity**: Maintaining the accuracy and completeness of information
-- **Availability**: Ensuring that information and resources are available when needed
-
-### Common Threats
-- Malware (viruses, trojans, ransomware)
-- Phishing attacks
-- Social engineering
-- Data breaches
-- Insider threats
-
-## Why Cybersecurity Matters
-
-In today's digital world, cybersecurity is more important than ever. Organizations face an increasing number of sophisticated cyber threats that can result in:
-- Financial losses
-- Reputation damage
-- Legal consequences
-- Operational disruption
-
-## Best Practices
-
-1. **Keep software updated** - Regular updates patch security vulnerabilities
-2. **Use strong passwords** - Complex passwords with special characters
-3. **Enable two-factor authentication** - Additional layer of security
-4. **Be cautious with emails** - Don't click suspicious links
-5. **Regular backups** - Protect your data from ransomware
-              `,
-              type: 'theory',
-              order: 1,
-              estimatedDuration: 30,
-              userProgress: { status: 'completed', completedAt: '2024-01-15', timeSpent: 28 }
-            },
-            {
-              id: '1-2',
-              title: 'Types of Cyber Threats',
-              description: 'Understanding different categories of cyber threats',
-              content: `
-# Types of Cyber Threats
-
-## Malware
-Malicious software designed to damage or gain unauthorized access to computer systems.
-
-### Common Types:
-- **Viruses**: Self-replicating programs that attach to legitimate files
-- **Trojans**: Malicious programs disguised as legitimate software
-- **Ransomware**: Malware that encrypts files and demands payment for decryption
-- **Spyware**: Software that secretly monitors user activity
-
-## Social Engineering
-Psychological manipulation to trick people into revealing sensitive information.
-
-### Common Techniques:
-- **Phishing**: Fraudulent emails or messages
-- **Pretexting**: Creating false scenarios to obtain information
-- **Baiting**: Offering something enticing to lure victims
-- **Quid pro quo**: Offering something in exchange for information
-
-## Network Attacks
-Attacks targeting network infrastructure and communications.
-
-### Common Types:
-- **DDoS**: Distributed Denial of Service attacks
-- **Man-in-the-Middle**: Intercepting communications
-- **DNS Spoofing**: Redirecting traffic to malicious sites
-
-## Prevention Strategies
-
-1. **Antivirus Software**: Keep it updated and running
-2. **Firewalls**: Monitor and control network traffic
-3. **User Training**: Educate employees about threats
-4. **Regular Updates**: Patch vulnerabilities promptly
-5. **Access Controls**: Limit user permissions
-              `,
-              type: 'theory',
-              order: 2,
-              estimatedDuration: 45,
-              userProgress: { status: 'completed', completedAt: '2024-01-15', timeSpent: 42 }
-            },
-            {
-              id: '1-3',
-              title: 'Security Best Practices',
-              description: 'Fundamental security practices everyone should follow',
-              content: `
-# Security Best Practices
-
-## Password Security
-- Use strong, unique passwords for each account
-- Enable two-factor authentication (2FA) when available
-- Use a password manager to store passwords securely
-- Never share passwords with others
-
-## Software Updates
-- Keep operating systems and software up to date
-- Enable automatic updates when possible
-- Install security patches promptly
-- Remove unused software and applications
-
-## Safe Browsing
-- Be cautious when clicking links in emails
-- Verify website URLs before entering sensitive information
-- Use HTTPS websites when possible
-- Avoid downloading software from untrusted sources
-
-## Data Protection
-- Regularly backup important data
-- Use encryption for sensitive information
-- Be mindful of what information you share online
-- Follow your organization's data handling policies
-
-## Physical Security
-- Lock your computer when stepping away
-- Don't leave sensitive documents unattended
-- Use privacy screens in public places
-- Secure mobile devices with passcodes
-
-## Incident Response
-- Report suspicious activity immediately
-- Know your organization's security procedures
-- Keep contact information for IT support handy
-- Document any security incidents
-              `,
-              type: 'practical',
-              order: 3,
-              estimatedDuration: 45,
-              userProgress: { status: 'in_progress', timeSpent: 15 }
-            }
-          ]
+    const fetchLesson = async () => {
+      try {
+        console.log('🔍 Fetching lesson with ID:', lessonId, 'from course:', courseId)
+        
+        // First, get the course data to find the lesson
+        const courseResponse = await fetch(`http://localhost:3001/api/courses/${courseId}`)
+        if (!courseResponse.ok) {
+          throw new Error('Failed to fetch course')
         }
-      ]
-    }
-
-    if (course) {
-      const foundLesson = course.modules
-        .flatMap(module => module.lessons)
-        .find(l => l.id === lessonId)
-
-      if (foundLesson) {
-        setLesson(foundLesson)
-        setCourse(course)
-        setTimeSpent(foundLesson.userProgress?.timeSpent || 0)
-        setIsCompleted(foundLesson.userProgress?.status === 'completed')
+        
+        const courseData = await courseResponse.json()
+        if (!courseData.success) {
+          throw new Error(courseData.message || 'Failed to fetch course')
+        }
+        
+        console.log('📊 Course data received:', courseData.course)
+        
+        // Find the lesson in the course modules
+        const foundLesson = courseData.course.modules
+          .flatMap((module: any) => module.lessons || [])
+          .find((l: any) => l.id === lessonId)
+        
+        console.log('🔍 Looking for lesson ID:', lessonId)
+        console.log('📚 Available lessons:', courseData.course.modules.flatMap((m: any) => m.lessons || []).map((l: any) => ({ id: l.id, title: l.title })))
+        
+        if (foundLesson) {
+          console.log('✅ Lesson found:', foundLesson)
+          setLesson(foundLesson)
+          setCourse(courseData.course)
+          setTimeSpent(foundLesson.userProgress?.timeSpent || 0)
+          setIsCompleted(foundLesson.userProgress?.status === 'completed')
+        } else {
+          console.log('❌ Lesson not found in course data')
+          setLesson(null)
+        }
+        
+        setLoading(false)
+      } catch (error) {
+        console.error('❌ Error fetching lesson:', error)
+        setLesson(null)
+        setLoading(false)
       }
     }
-    
-    setLoading(false)
+
+    fetchLesson()
   }, [courseId, lessonId])
 
   useEffect(() => {
@@ -318,10 +196,18 @@ Attacks targeting network infrastructure and communications.
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => router.push(`/learning/${courseId}`)}
-                className="flex items-center text-gray-600 hover:text-warm-copper transition-colors"
+                onClick={() => router.push('/dashboard')}
+                className="flex items-center text-gray-500 hover:text-warm-copper transition-colors group"
               >
-                <ArrowLeft className="w-5 h-5 mr-2" />
+                <ArrowLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+                <span className="text-sm">Dashboard</span>
+              </button>
+              <div className="h-4 w-px bg-gray-300"></div>
+              <button
+                onClick={() => router.push(`/learning/${courseId}`)}
+                className="flex items-center text-gray-600 hover:text-warm-copper transition-colors group"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
                 Back to Course
               </button>
               <div className="h-6 w-px bg-gray-300"></div>
@@ -349,8 +235,25 @@ Attacks targeting network infrastructure and communications.
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           {/* Lesson Content */}
           <div className="p-8">
-            <div className="prose max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: lesson.content.replace(/\n/g, '<br>') }} />
+            <div className="prose max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-ul:text-gray-700 prose-ol:text-gray-700 prose-strong:text-gray-900">
+              <div 
+                dangerouslySetInnerHTML={{ 
+                  __html: lesson.content
+                    .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold text-gray-900 mb-6">$1</h1>')
+                    .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-semibold text-gray-900 mb-4 mt-8">$1</h2>')
+                    .replace(/^### (.*$)/gim, '<h3 class="text-xl font-semibold text-gray-900 mb-3 mt-6">$1</h3>')
+                    .replace(/^\- \*\*(.*?)\*\*: (.*$)/gim, '<li class="mb-2"><strong class="text-gray-900">$1</strong>: $2</li>')
+                    .replace(/^\- (.*$)/gim, '<li class="mb-2">$1</li>')
+                    .replace(/^\d+\. \*\*(.*?)\*\*: (.*$)/gim, '<li class="mb-2"><strong class="text-gray-900">$1</strong>: $2</li>')
+                    .replace(/^\d+\. (.*$)/gim, '<li class="mb-2">$1</li>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900">$1</strong>')
+                    .replace(/\n\n/g, '</p><p class="mb-4">')
+                    .replace(/\n/g, '<br>')
+                    .replace(/^(?!<[h|l])/gm, '<p class="mb-4">')
+                    .replace(/(<li.*<\/li>)/gs, '<ul class="list-disc list-inside mb-4 space-y-1">$1</ul>')
+                    .replace(/(<h[1-6].*<\/h[1-6]>)/g, '$1')
+                }} 
+              />
             </div>
           </div>
 

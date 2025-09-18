@@ -342,14 +342,24 @@ export default function UserDashboard() {
               Resume Training
             </button>
             <button 
-              onClick={() => handleCourseClick('foundation')}
+              onClick={() => {
+                const foundationCourse = courses.find(course => course.level === 'foundation')
+                if (foundationCourse) {
+                  handleCourseClick(foundationCourse.id)
+                }
+              }}
               className="bg-white/20 text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/30 transition-colors flex items-center"
             >
               <PhishingHook className="w-5 h-5 mr-2" />
               Take Simulation
             </button>
             <button 
-              onClick={() => handleCourseClick('foundation')}
+              onClick={() => {
+                const foundationCourse = courses.find(course => course.level === 'foundation')
+                if (foundationCourse) {
+                  handleCourseClick(foundationCourse.id)
+                }
+              }}
               className="bg-white/20 text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/30 transition-colors flex items-center"
             >
               <BookOpen className="w-5 h-5 mr-2" />
