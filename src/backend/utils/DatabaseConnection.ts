@@ -13,7 +13,6 @@ class DatabaseConnection {
       password: databaseConfig.password,
       database: databaseConfig.database,
       connectionLimit: databaseConfig.connectionLimit,
-      timeout: databaseConfig.timeout,
       waitForConnections: true,
       queueLimit: 0
     });
