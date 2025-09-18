@@ -1,12 +1,14 @@
 'use client'
 
 import { Menu, Bell, User, Shield } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface DashboardHeaderProps {
   onMenuClick: () => void
 }
 
 export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
+  const { user } = useAuth()
   return (
     <header className="header-gradient shadow-lg">
       <div className="px-6 py-4">
@@ -45,8 +47,12 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 <User className="h-6 w-6 text-white" />
               </div>
               <div className="hidden md:block">
-                <p className="text-sm font-medium text-white">Admin User</p>
-                <p className="text-xs text-harmony-cream">Administrator</p>
+                <p className="text-sm font-medium text-white">
+                  {user?.firstName} {user?.lastName}
+                </p>
+                <p className="text-xs text-harmony-cream capitalize">
+                  {user?.role?.replace('_', ' ')}
+                </p>
               </div>
             </div>
           </div>
