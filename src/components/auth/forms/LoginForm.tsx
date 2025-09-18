@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { LoginRequest } from '@/types/auth'
 
@@ -18,14 +19,16 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   
   const { login } = useAuth()
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      await login(formData)
-      // Success handled by context
+      const response = await login(formData)
+      // Redirect to dashboard after successful login
+      router.push('/dashboard')
     } catch (error: any) {
       console.error('Login error:', error)
       // Error handled by context

@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { jwtConfig } from '../../config/database';
 
 export interface JwtPayload {
@@ -10,18 +10,24 @@ export interface JwtPayload {
 
 export class JwtUtils {
   static generateAccessToken(payload: Omit<JwtPayload, 'type'>): string {
+    const options: SignOptions = {
+      expiresIn: jwtConfig.expiresIn as any
+    };
     return jwt.sign(
       { ...payload, type: 'access' },
       jwtConfig.secret,
-      { expiresIn: jwtConfig.expiresIn }
+      options
     );
   }
 
   static generateRefreshToken(payload: Omit<JwtPayload, 'type'>): string {
+    const options: SignOptions = {
+      expiresIn: jwtConfig.refreshExpiresIn as any
+    };
     return jwt.sign(
       { ...payload, type: 'refresh' },
       jwtConfig.secret,
-      { expiresIn: jwtConfig.refreshExpiresIn }
+      options
     );
   }
 

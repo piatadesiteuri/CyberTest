@@ -109,25 +109,83 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// Simple login endpoint for testing
-app.post('/api/auth/login', (req, res) => {
-  console.log('Login request received:', req.body);
-  res.status(200).json({
-    success: true,
-    message: 'Login successful (mock)',
-    data: {
-      token: 'mock-token',
-      refreshToken: 'mock-refresh-token',
-      user: {
-        id: 'mock-id',
-        email: req.body.email,
-        firstName: 'Test',
-        lastName: 'User',
-        role: 'employee',
-        department: 'IT'
-      }
+// Login endpoint with database verification
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    console.log('Login request received:', req.body);
+    
+    if (!db) {
+      return res.status(500).json({
+        success: false,
+        message: 'Database not connected'
+      });
     }
-  });
+
+    const { email, password } = req.body;
+
+    // Find user by email
+    const [users] = await db.execute(
+      'SELECT id, email, password, first_name, last_name, department, role, is_active, email_verified FROM users WHERE email = ?',
+      [email]
+    );
+
+    if ((users as any[]).length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    const user = (users as any[])[0];
+
+    // Check if user is active
+    if (!user.is_active) {
+      return res.status(401).json({
+        success: false,
+        message: 'Account is deactivated'
+      });
+    }
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    // Update last login
+    await db.execute(
+      'UPDATE users SET last_login_at = NOW() WHERE id = ?',
+      [user.id]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        token: 'real-token', // In a real app, generate JWT here
+        refreshToken: 'real-refresh-token',
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          role: user.role,
+          department: user.department,
+          isActive: user.is_active,
+          emailVerified: user.email_verified
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Login failed'
+    });
+  }
 });
 
 // Start server

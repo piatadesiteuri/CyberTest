@@ -67,6 +67,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Role-based helper functions
+  const hasRole = (role: string): boolean => {
+    return user?.role === role
+  }
+
+  const hasAnyRole = (roles: string[]): boolean => {
+    return user ? roles.includes(user.role) : false
+  }
+
+  const isAdmin = (): boolean => {
+    return hasAnyRole(['admin', 'it_security_admin', 'ciso'])
+  }
+
+  const isManager = (): boolean => {
+    return hasAnyRole(['manager', 'admin', 'it_security_admin', 'ciso'])
+  }
+
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
@@ -75,6 +92,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     refreshToken,
+    hasRole,
+    hasAnyRole,
+    isAdmin,
+    isManager,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

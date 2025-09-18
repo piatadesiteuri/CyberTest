@@ -13,9 +13,9 @@ export interface User {
 export enum UserRole {
   EMPLOYEE = 'employee',
   MANAGER = 'manager',
-  HR = 'hr',
-  IT_SECURITY = 'it_security',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
+  IT_SECURITY_ADMIN = 'it_security_admin',
+  CISO = 'ciso'
 }
 
 export interface LoginRequest {
@@ -49,4 +49,8 @@ export interface AuthContextType {
   register: (userData: RegisterRequest) => Promise<AuthResponse>
   logout: () => void
   refreshToken: () => Promise<void>
+  hasRole: (role: string) => boolean
+  hasAnyRole: (roles: string[]) => boolean
+  isAdmin: () => boolean
+  isManager: () => boolean
 }

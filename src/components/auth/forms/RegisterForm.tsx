@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { RegisterRequest, UserRole } from '@/types/auth'
 
@@ -24,6 +25,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   const [acceptTerms, setAcceptTerms] = useState(false)
   
   const { register } = useAuth()
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,8 +43,9 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     setIsLoading(true)
 
     try {
-      await register(formData)
-      // Success handled by context
+      const response = await register(formData)
+      // Redirect to dashboard after successful registration
+      router.push('/dashboard')
     } catch (error: any) {
       console.error('Registration error:', error)
       // Error handled by context
