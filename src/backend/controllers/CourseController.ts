@@ -79,9 +79,8 @@ export class CourseController {
   async getCourseById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      console.log(`🚀 Starting getCourseById for course: ${id}`);
+      console.log('🎯 Getting course by ID:', id);
       const connection = await this.getConnection();
-      console.log(`🔌 Database connection established`);
       
       // Get course
       const [courses] = await connection.query(`
@@ -90,9 +89,10 @@ export class CourseController {
           learning_objectives, tags, is_active, created_by, created_at, updated_at
         FROM courses 
         WHERE id = ? AND is_active = true
-      `, [id]) as any[];
+      `, [id]) as [any[], any];
 
       if (courses.length === 0) {
+        console.log('❌ Course not found:', id);
         await connection.end();
         res.status(404).json({
           success: false,
@@ -100,6 +100,8 @@ export class CourseController {
         });
         return;
       }
+
+      console.log('✅ Course found:', courses[0].title);
 
       const course = courses[0];
 
@@ -111,7 +113,12 @@ export class CourseController {
         FROM modules 
         WHERE course_id = ? AND is_active = true
         ORDER BY \`order\` ASC
-      `, [id]) as any[];
+      `, [id]) as [any[], any];
+
+      console.log('🔍 Modules found:', modules.length);
+      if (modules.length > 0) {
+        console.log('📋 Module titles:', modules.map((m: any) => m.title));
+      }
 
       // Get lessons for each module
       for (const module of modules) {
@@ -122,7 +129,7 @@ export class CourseController {
           FROM lessons 
           WHERE module_id = ? AND is_active = true
           ORDER BY \`order\` ASC
-        `, [module.id]) as any[];
+        `, [module.id]) as [any[], any];
 
         module.lessons = lessons.map((lesson: any) => ({
           id: lesson.id,
@@ -147,7 +154,13 @@ export class CourseController {
           WHERE module_id = ? AND is_active = true
           ORDER BY created_at DESC
           LIMIT 1
-        `, [module.id]) as any[];
+        `, [module.id]) as [any[], any];
+
+        console.log(`🔍 Quiz for module ${module.id} (${module.title}):`, quizzes.length);
+        if (quizzes.length > 0) {
+          console.log(`📝 Quiz title: "${quizzes[0].title}"`);
+          console.log(`📝 Quiz ID: ${quizzes[0].id}`);
+        }
 
         if (quizzes.length > 0) {
           const quiz = quizzes[0];
@@ -160,7 +173,12 @@ export class CourseController {
             FROM questions 
             WHERE quiz_id = ? AND is_active = true
             ORDER BY \`order\` ASC
-          `, [quiz.id]) as any[];
+          `, [quiz.id]) as [any[], any];
+
+          console.log(`❓ Questions for quiz ${quiz.id}:`, questions.length);
+          if (questions.length > 0) {
+            console.log(`📝 First question: "${questions[0].text.substring(0, 50)}..."`);
+          }
 
           module.quiz = {
             id: quiz.id,
@@ -221,6 +239,10 @@ export class CourseController {
       };
 
       await connection.end();
+      
+      console.log('🎉 Final course data:');
+      console.log('📊 Modules:', formattedCourse.modules.length);
+      console.log('📊 Quizzes:', formattedCourse.modules.filter((m: any) => m.quiz).length);
       
       res.json({
         success: true,

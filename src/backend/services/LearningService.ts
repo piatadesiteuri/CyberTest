@@ -1,8 +1,8 @@
-import { DatabaseConnection } from '../utils/DatabaseConnection';
-import { Course, CreateCourseData, UpdateCourseData, CourseLevel } from '../entities/Course';
+import DatabaseConnection from '../utils/DatabaseConnection';
+import { Course, CreateCourseData, UpdateCourseData, CourseLevel, CourseStatus } from '../entities/Course';
 import { Module, CreateModuleData, UpdateModuleData } from '../entities/Module';
 import { Lesson, CreateLessonData, UpdateLessonData, LessonType } from '../entities/Lesson';
-import { Quiz, CreateQuizData, UpdateQuizData, QuizType } from '../entities/Quiz';
+import { Quiz, CreateQuizData, UpdateQuizData, QuizType, QuizStatus } from '../entities/Quiz';
 import { Question, CreateQuestionData, UpdateQuestionData, QuestionType } from '../entities/Question';
 import { UserProgress, CreateUserProgressData, UpdateUserProgressData, ProgressStatus, QuizAttempt, CreateQuizAttemptData } from '../entities/UserProgress';
 
@@ -10,7 +10,7 @@ export class LearningService {
   private db: DatabaseConnection;
 
   constructor() {
-    this.db = new DatabaseConnection();
+    this.db = DatabaseConnection.getInstance();
   }
 
   // Course Management
@@ -19,7 +19,8 @@ export class LearningService {
     const course: Course = {
       id,
       ...courseData,
-      status: 'draft',
+      prerequisites: courseData.prerequisites || [],
+      status: CourseStatus.PUBLISHED,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -31,7 +32,7 @@ export class LearningService {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    await this.db.query(query, [
+    await this.db.getPool().execute(query, [
       course.id,
       course.title,
       course.description,
@@ -52,7 +53,7 @@ export class LearningService {
 
   async getCourseById(id: string): Promise<Course | null> {
     const query = 'SELECT * FROM courses WHERE id = ? AND is_active = TRUE';
-    const results = await this.db.query(query, [id]);
+    const [results] = await this.db.getPool().execute(query, [id]) as [any[], any];
     
     if (results.length === 0) return null;
     
@@ -61,14 +62,14 @@ export class LearningService {
 
   async getCoursesByLevel(level: CourseLevel): Promise<Course[]> {
     const query = 'SELECT * FROM courses WHERE level = ? AND status = "published" AND is_active = TRUE ORDER BY created_at DESC';
-    const results = await this.db.query(query, [level]);
+    const [results] = await this.db.getPool().execute(query, [level]) as [any[], any];
     
     return results.map(this.mapCourseFromDb);
   }
 
   async getAllPublishedCourses(): Promise<Course[]> {
     const query = 'SELECT * FROM courses WHERE status = "published" AND is_active = TRUE ORDER BY level, created_at DESC';
-    const results = await this.db.query(query);
+    const [results] = await this.db.getPool().execute(query) as [any[], any];
     
     return results.map(this.mapCourseFromDb);
   }
@@ -89,7 +90,7 @@ export class LearningService {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    await this.db.query(query, [
+    await this.db.getPool().execute(query, [
       module.id,
       module.courseId,
       module.title,
@@ -106,7 +107,7 @@ export class LearningService {
 
   async getModulesByCourseId(courseId: string): Promise<Module[]> {
     const query = 'SELECT * FROM modules WHERE course_id = ? AND is_active = TRUE ORDER BY `order`';
-    const results = await this.db.query(query, [courseId]);
+    const [results] = await this.db.getPool().execute(query, [courseId]) as [any[], any];
     
     return results.map(this.mapModuleFromDb);
   }
@@ -127,7 +128,7 @@ export class LearningService {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    await this.db.query(query, [
+    await this.db.getPool().execute(query, [
       lesson.id,
       lesson.moduleId,
       lesson.title,
@@ -146,7 +147,7 @@ export class LearningService {
 
   async getLessonsByModuleId(moduleId: string): Promise<Lesson[]> {
     const query = 'SELECT * FROM lessons WHERE module_id = ? AND is_active = TRUE ORDER BY `order`';
-    const results = await this.db.query(query, [moduleId]);
+    const [results] = await this.db.getPool().execute(query, [moduleId]) as [any[], any];
     
     return results.map(this.mapLessonFromDb);
   }
@@ -157,7 +158,9 @@ export class LearningService {
     const quiz: Quiz = {
       id,
       ...quizData,
-      status: 'draft',
+      timeLimit: quizData.timeLimit || 0,
+      maxAttempts: quizData.maxAttempts || 0,
+      status: QuizStatus.PUBLISHED,
       questions: [],
       isActive: true,
       createdAt: new Date(),
@@ -169,7 +172,7 @@ export class LearningService {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    await this.db.query(query, [
+    await this.db.getPool().execute(query, [
       quiz.id,
       quiz.moduleId,
       quiz.title,
@@ -189,7 +192,7 @@ export class LearningService {
 
   async getQuizById(id: string): Promise<Quiz | null> {
     const query = 'SELECT * FROM quizzes WHERE id = ? AND is_active = TRUE';
-    const results = await this.db.query(query, [id]);
+    const [results] = await this.db.getPool().execute(query, [id]) as [any[], any];
     
     if (results.length === 0) return null;
     
@@ -208,6 +211,10 @@ export class LearningService {
     const question: Question = {
       id,
       ...questionData,
+      answers: questionData.answers.map((answer, index) => ({
+        ...answer,
+        id: this.generateId()
+      })),
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -218,7 +225,7 @@ export class LearningService {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    await this.db.query(query, [
+    await this.db.getPool().execute(query, [
       question.id,
       question.quizId,
       question.text,
@@ -237,7 +244,7 @@ export class LearningService {
 
   async getQuestionsByQuizId(quizId: string): Promise<Question[]> {
     const query = 'SELECT * FROM questions WHERE quiz_id = ? AND is_active = TRUE ORDER BY `order`';
-    const results = await this.db.query(query, [quizId]);
+    const [results] = await this.db.getPool().execute(query, [quizId]) as [any[], any];
     
     return results.map(this.mapQuestionFromDb);
   }
@@ -259,7 +266,7 @@ export class LearningService {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    await this.db.query(query, [
+    await this.db.getPool().execute(query, [
       progress.id,
       progress.userId,
       progress.courseId,
@@ -281,7 +288,7 @@ export class LearningService {
 
   async getUserProgress(userId: string, courseId: string): Promise<UserProgress | null> {
     const query = 'SELECT * FROM user_progress WHERE user_id = ? AND course_id = ? ORDER BY updated_at DESC LIMIT 1';
-    const results = await this.db.query(query, [userId, courseId]);
+    const [results] = await this.db.getPool().execute(query, [userId, courseId]) as [any[], any];
     
     if (results.length === 0) return null;
     
@@ -324,7 +331,7 @@ export class LearningService {
     values.push(id);
 
     const query = `UPDATE user_progress SET ${fields.join(', ')} WHERE id = ?`;
-    await this.db.query(query, values);
+    await this.db.getPool().execute(query, values);
   }
 
   // Quiz Attempt Management
@@ -345,11 +352,11 @@ export class LearningService {
 
       let isCorrect = false;
       if (question.type === QuestionType.MULTIPLE_CHOICE || question.type === QuestionType.SINGLE_CHOICE) {
-        const correctAnswerIds = question.answers.filter(a => a.isCorrect).map(a => a.id);
+        const correctAnswerIds = question.answers.filter((a: any) => a.isCorrect).map((a: any) => a.id);
         isCorrect = answer.answerIds.length === correctAnswerIds.length && 
                    answer.answerIds.every(id => correctAnswerIds.includes(id));
       } else if (question.type === QuestionType.TRUE_FALSE) {
-        const correctAnswer = question.answers.find(a => a.isCorrect);
+        const correctAnswer = question.answers.find((a: any) => a.isCorrect);
         isCorrect = correctAnswer && answer.answerIds.includes(correctAnswer.id);
       }
 
@@ -388,7 +395,7 @@ export class LearningService {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    await this.db.query(query, [
+    await this.db.getPool().execute(query, [
       attempt.id,
       attempt.userId,
       attempt.quizId,

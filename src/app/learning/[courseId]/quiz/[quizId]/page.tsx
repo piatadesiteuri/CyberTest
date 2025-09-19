@@ -59,89 +59,63 @@ export default function QuizPage() {
   const [canRetake, setCanRetake] = useState(true)
 
   useEffect(() => {
-    // Mock data - replace with actual API call
-    const mockQuiz: Quiz = {
-      id: quizId as string,
-      title: 'Cybersecurity Fundamentals Quiz',
-      description: 'Test your understanding of basic cybersecurity concepts',
-      timeLimit: 15, // 15 minutes
-      passingScore: 70,
-      maxAttempts: 3,
-      questions: [
-        {
-          id: 'q1',
-          text: 'What does the "C" in the CIA Triad stand for?',
-          type: 'single_choice',
-          points: 10,
-          order: 1,
-          answers: [
-            { text: 'Confidentiality', isCorrect: true, explanation: 'Confidentiality ensures information is not disclosed to unauthorized individuals.' },
-            { text: 'Confidence', isCorrect: false, explanation: 'Confidence is not part of the CIA Triad.' },
-            { text: 'Control', isCorrect: false, explanation: 'Control is not part of the CIA Triad.' },
-            { text: 'Compliance', isCorrect: false, explanation: 'Compliance is not part of the CIA Triad.' }
-          ],
-          explanation: 'The CIA Triad consists of Confidentiality, Integrity, and Availability.'
-        },
-        {
-          id: 'q2',
-          text: 'Which of the following is NOT a type of malware?',
-          type: 'single_choice',
-          points: 10,
-          order: 2,
-          answers: [
-            { text: 'Virus', isCorrect: false, explanation: 'Viruses are a type of malware.' },
-            { text: 'Firewall', isCorrect: true, explanation: 'A firewall is a security device, not malware.' },
-            { text: 'Trojan', isCorrect: false, explanation: 'Trojans are a type of malware.' },
-            { text: 'Ransomware', isCorrect: false, explanation: 'Ransomware is a type of malware.' }
-          ],
-          explanation: 'A firewall is a security device that monitors and controls network traffic, not malicious software.'
-        },
-        {
-          id: 'q3',
-          text: 'Phishing is a type of social engineering attack.',
-          type: 'true_false',
-          points: 10,
-          order: 3,
-          answers: [
-            { text: 'True', isCorrect: true, explanation: 'Phishing uses psychological manipulation to trick people.' },
-            { text: 'False', isCorrect: false, explanation: 'Phishing is indeed a social engineering technique.' }
-          ],
-          explanation: 'Phishing is a social engineering attack that uses fraudulent communications to trick people into revealing sensitive information.'
-        },
-        {
-          id: 'q4',
-          text: 'What are the three main components of the CIA Triad? (Select all that apply)',
-          type: 'multiple_choice',
-          points: 15,
-          order: 4,
-          answers: [
-            { text: 'Confidentiality', isCorrect: true, explanation: 'Confidentiality is one of the three components.' },
-            { text: 'Integrity', isCorrect: true, explanation: 'Integrity is one of the three components.' },
-            { text: 'Availability', isCorrect: true, explanation: 'Availability is one of the three components.' },
-            { text: 'Authentication', isCorrect: false, explanation: 'Authentication is not part of the CIA Triad.' }
-          ],
-          explanation: 'The CIA Triad consists of Confidentiality, Integrity, and Availability.'
-        },
-        {
-          id: 'q5',
-          text: 'A strong password should contain at least 8 characters, including uppercase letters, lowercase letters, numbers, and special characters.',
-          type: 'true_false',
-          points: 10,
-          order: 5,
-          answers: [
-            { text: 'True', isCorrect: true, explanation: 'Strong passwords should include multiple character types.' },
-            { text: 'False', isCorrect: false, explanation: 'This is indeed a characteristic of strong passwords.' }
-          ],
-          explanation: 'Strong passwords should be at least 8 characters long and include a mix of uppercase, lowercase, numbers, and special characters.'
+    // Fetch quiz data from API
+    const fetchQuiz = async () => {
+      try {
+        console.log('🎯 Fetching quiz with ID:', quizId);
+        const response = await fetch(`http://localhost:3001/api/courses/${courseId}`);
+        const data = await response.json();
+        
+        if (data.success && data.course) {
+          console.log('📊 Course data received:', data.course);
+          
+          // Find the quiz in the course modules
+          let foundQuiz = null;
+          for (const module of data.course.modules) {
+            if (module.quiz && module.quiz.id === quizId) {
+              foundQuiz = module.quiz;
+              break;
+            }
+          }
+          
+          if (foundQuiz) {
+            console.log('✅ Quiz found:', foundQuiz.title);
+            console.log('❓ Questions count:', foundQuiz.questions.length);
+            setQuiz(foundQuiz);
+            setTimeLeft((foundQuiz.timeLimit || 15) * 60); // Convert minutes to seconds
+          } else {
+            console.log('❌ Quiz not found in course modules');
+            // Fallback to mock data
+            setQuiz(mockQuiz);
+            setTimeLeft(15 * 60);
+          }
+        } else {
+          console.log('❌ Failed to fetch course data, using mock data');
+          setQuiz(mockQuiz);
+          setTimeLeft(15 * 60);
         }
-      ]
-    }
+      } catch (error) {
+        console.error('❌ Error fetching quiz:', error);
+        setQuiz(mockQuiz);
+        setTimeLeft(15 * 60);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setQuiz(mockQuiz)
-    setTimeLeft(mockQuiz.timeLimit * 60) // Convert to seconds
-    setRetakeTimer(15 * 60) // 15 minutes for retake
-    setLoading(false)
-  }, [quizId])
+    fetchQuiz();
+  }, [courseId, quizId]);
+
+  // Mock data as fallback
+  const mockQuiz: Quiz = {
+    id: quizId as string,
+    title: 'Cybersecurity Fundamentals Quiz',
+    description: 'Test your understanding of basic cybersecurity concepts',
+    timeLimit: 15, // 15 minutes
+    passingScore: 70,
+    maxAttempts: 3,
+    questions: []
+  };
 
   useEffect(() => {
     if (timeLeft > 0 && !isSubmitted) {
@@ -253,7 +227,7 @@ export default function QuizPage() {
     
     setAnswers({})
     setCurrentQuestionIndex(0)
-    setTimeLeft(quiz?.timeLimit * 60 || 0)
+    setTimeLeft((quiz?.timeLimit || 15) * 60)
     setIsSubmitted(false)
     setShowResults(false)
     setQuizResult(null)
@@ -567,11 +541,11 @@ export default function QuizPage() {
                     checked={isSelected}
                     onChange={(e) => {
                       if (currentQuestion.type === 'multiple_choice') {
-                        const currentAnswers = Array.isArray(answers[currentQuestion.id]) ? answers[currentQuestion.id] : []
+                        const currentAnswers = Array.isArray(answers[currentQuestion.id]) ? answers[currentQuestion.id] as string[] : []
                         if (e.target.checked) {
                           handleAnswerChange(currentQuestion.id, [...currentAnswers, answer.text])
                         } else {
-                          handleAnswerChange(currentQuestion.id, currentAnswers.filter(a => a !== answer.text))
+                          handleAnswerChange(currentQuestion.id, currentAnswers.filter((a: string) => a !== answer.text))
                         }
                       } else {
                         handleAnswerChange(currentQuestion.id, answer.text)
