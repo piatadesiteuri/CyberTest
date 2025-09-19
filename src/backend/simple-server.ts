@@ -317,6 +317,11 @@ app.get('/api/progress/stats', authenticateToken, (req, res) => progressControll
 app.get('/api/progress/next-lesson/:courseId', authenticateToken, (req, res) => progressController.getNextLesson(req, res));
 app.get('/api/progress/course/:courseId/lessons', authenticateToken, (req, res) => progressController.getCourseLessonsProgress(req, res));
 
+// Advanced quiz unlock system
+app.get('/api/progress/quiz/:quizId/unlock', authenticateToken, (req, res) => progressController.checkQuizUnlock(req, res));
+app.get('/api/progress/course/:courseId/quizzes', authenticateToken, (req, res) => progressController.getAvailableQuizzes(req, res));
+app.get('/api/progress/module/:moduleId', authenticateToken, (req, res) => progressController.getModuleProgress(req, res));
+
 // Start server
 const startServer = async () => {
   await connectDB();

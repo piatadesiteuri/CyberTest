@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { ArrowLeft, Clock, CheckCircle, RotateCcw, Target, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Clock, CheckCircle, RotateCcw, Target, AlertCircle, Lock } from 'lucide-react'
 
 interface Question {
   id: string
@@ -48,6 +48,12 @@ export default function QuizPage() {
   const router = useRouter()
   const [quiz, setQuiz] = useState<Quiz | null>(null)
   const [loading, setLoading] = useState(true)
+  const [unlockStatus, setUnlockStatus] = useState<{
+    isUnlocked: boolean;
+    reason?: string;
+    requiredProgress?: number;
+    currentProgress?: number;
+  } | null>(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<{ [questionId: string]: string | string[] }>({})
   const [timeLeft, setTimeLeft] = useState(0)
@@ -59,6 +65,29 @@ export default function QuizPage() {
   const [canRetake, setCanRetake] = useState(true)
 
   useEffect(() => {
+    // Check quiz unlock status first
+    const checkQuizUnlock = async () => {
+      try {
+        const response = await fetch(`http://localhost:3001/api/progress/quiz/${quizId}/unlock`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (response.ok) {
+          const unlockData = await response.json();
+          setUnlockStatus(unlockData.data);
+          
+          if (!unlockData.data.isUnlocked) {
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking quiz unlock status:', error);
+      }
+    };
+
     // Fetch quiz data from API
     const fetchQuiz = async () => {
       try {
@@ -103,7 +132,9 @@ export default function QuizPage() {
       }
     };
 
-    fetchQuiz();
+    checkQuizUnlock().then(() => {
+      fetchQuiz();
+    });
   }, [courseId, quizId]);
 
   // Mock data as fallback
@@ -257,6 +288,41 @@ export default function QuizPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-warm-copper mx-auto mb-4"></div>
           <p className="text-gray-600">Loading quiz...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show locked quiz message
+  if (unlockStatus && !unlockStatus.isUnlocked) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-harmony-cream via-white to-harmony-tan flex items-center justify-center">
+        <div className="max-w-md mx-auto text-center p-8 bg-white rounded-lg shadow-lg border border-gray-200">
+          <Lock className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Quiz Locked</h2>
+          <p className="text-gray-600 mb-6">{unlockStatus.reason}</p>
+          
+          {unlockStatus.requiredProgress && unlockStatus.currentProgress !== undefined && (
+            <div className="mb-6">
+              <div className="flex justify-between text-sm text-gray-600 mb-2">
+                <span>Progress Required</span>
+                <span>{unlockStatus.currentProgress}% / {unlockStatus.requiredProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-warm-copper h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min((unlockStatus.currentProgress / unlockStatus.requiredProgress) * 100, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+          
+          <button
+            onClick={() => router.push(`/learning/${courseId}`)}
+            className="bg-warm-copper text-white px-6 py-2 rounded-lg hover:bg-warm-bronze transition-colors"
+          >
+            Back to Course
+          </button>
         </div>
       </div>
     )

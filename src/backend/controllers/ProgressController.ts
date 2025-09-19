@@ -283,4 +283,91 @@ export class ProgressController {
       });
     }
   }
+
+  // Check if quiz is unlocked
+  async checkQuizUnlock(req: Request, res: Response): Promise<void> {
+    try {
+      const { quizId } = req.params;
+      const userId = (req as any).user?.userId;
+
+      if (!userId) {
+        res.status(401).json({ 
+          success: false, 
+          message: 'User not authenticated' 
+        });
+        return;
+      }
+
+      const unlockStatus = await this.progressService.isQuizUnlocked(userId, quizId);
+      
+      res.status(200).json({
+        success: true,
+        data: unlockStatus
+      });
+    } catch (error) {
+      console.error('Error checking quiz unlock:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to check quiz unlock status' 
+      });
+    }
+  }
+
+  // Get available quizzes (unlocked and locked)
+  async getAvailableQuizzes(req: Request, res: Response): Promise<void> {
+    try {
+      const { courseId } = req.params;
+      const userId = (req as any).user?.userId;
+
+      if (!userId) {
+        res.status(401).json({ 
+          success: false, 
+          message: 'User not authenticated' 
+        });
+        return;
+      }
+
+      const quizzes = await this.progressService.getAvailableQuizzes(userId, courseId);
+      
+      res.status(200).json({
+        success: true,
+        data: quizzes
+      });
+    } catch (error) {
+      console.error('Error getting available quizzes:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to get available quizzes' 
+      });
+    }
+  }
+
+  // Get module progress
+  async getModuleProgress(req: Request, res: Response): Promise<void> {
+    try {
+      const { moduleId } = req.params;
+      const userId = (req as any).user?.userId;
+
+      if (!userId) {
+        res.status(401).json({ 
+          success: false, 
+          message: 'User not authenticated' 
+        });
+        return;
+      }
+
+      const progress = await this.progressService.getModuleProgress(userId, moduleId);
+      
+      res.status(200).json({
+        success: true,
+        data: progress
+      });
+    } catch (error) {
+      console.error('Error getting module progress:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to get module progress' 
+      });
+    }
+  }
 }

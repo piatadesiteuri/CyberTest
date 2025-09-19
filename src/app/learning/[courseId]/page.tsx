@@ -30,6 +30,7 @@ interface Module {
   estimatedDuration: number
   lessons: Lesson[]
   quiz?: Quiz
+  quizzes?: Quiz[]
   userProgress?: {
     status: string
     progressPercentage: number
@@ -58,6 +59,10 @@ interface Quiz {
   passingScore: number
   maxAttempts: number
   questions: Question[]
+  isUnlocked?: boolean
+  unlockReason?: string
+  requiredProgress?: number
+  currentProgress?: number
 }
 
 interface Question {
@@ -145,6 +150,36 @@ export default function CoursePage() {
             }
             
             setCourse(courseWithProgress)
+            
+            // Fetch available quizzes with unlock status
+            try {
+              const quizzesResponse = await fetch(`http://localhost:3001/api/progress/course/${courseId}/quizzes`, {
+                headers: {
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+              })
+              
+              if (quizzesResponse.ok) {
+                const quizzesData = await quizzesResponse.json()
+                console.log('🎯 Quizzes data received:', quizzesData.data)
+                
+                // Add quiz data to modules
+                const courseWithQuizzes = {
+                  ...courseWithProgress,
+                  modules: courseWithProgress.modules.map((module: any) => ({
+                    ...module,
+                    quizzes: [
+                      ...quizzesData.data.unlocked.filter((q: any) => q.module_id === module.id),
+                      ...quizzesData.data.locked.filter((q: any) => q.module_id === module.id)
+                    ]
+                  }))
+                }
+                
+                setCourse(courseWithQuizzes)
+              }
+            } catch (quizError) {
+              console.log('⚠️ Could not fetch quizzes, using course data without quizzes:', quizError)
+            }
           } catch (progressError) {
             console.error('⚠️ Error fetching progress, using course without progress:', progressError)
             setCourse(data.course)
@@ -387,26 +422,72 @@ export default function CoursePage() {
                         );
                       })}
 
-                      {/* Quiz */}
-                      {module.quiz && (
-                        <div className="flex items-center justify-between p-4 bg-warm-copper/10 rounded-lg border border-warm-copper/20">
-                          <div className="flex items-center space-x-3">
-                            <Target className="w-5 h-5 text-warm-copper" />
-                            <div>
-                              <h4 className="font-medium text-gray-900">{module.quiz.title}</h4>
-                              <p className="text-sm text-gray-600">{module.quiz.description}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500">{module.quiz.timeLimit} min</span>
-                            <span className="text-xs text-gray-500">{module.quiz?.passingScore}% to pass</span>
-                            <button 
-                              onClick={() => router.push(`/learning/${courseId}/quiz/${module.quiz?.id}`)}
-                              className="bg-warm-copper text-white px-3 py-1 rounded text-sm hover:bg-warm-bronze transition-colors"
+                      {/* Quizzes */}
+                      {module.quizzes && module.quizzes.length > 0 && (
+                        <div className="space-y-3">
+                          {module.quizzes.map((quiz: Quiz, quizIndex: number) => (
+                            <div 
+                              key={quiz.id}
+                              className={`flex items-center justify-between p-4 rounded-lg border ${
+                                quiz.isUnlocked 
+                                  ? 'bg-warm-copper/10 border-warm-copper/20' 
+                                  : 'bg-gray-50 border-gray-200'
+                              }`}
                             >
-                              Start Quiz
-                            </button>
-                          </div>
+                              <div className="flex items-center space-x-3">
+                                {quiz.isUnlocked ? (
+                                  <Target className="w-5 h-5 text-warm-copper" />
+                                ) : (
+                                  <Lock className="w-5 h-5 text-gray-400" />
+                                )}
+                                <div>
+                                  <h4 className={`font-medium ${quiz.isUnlocked ? 'text-gray-900' : 'text-gray-500'}`}>
+                                    {quiz.title}
+                                  </h4>
+                                  <p className={`text-sm ${quiz.isUnlocked ? 'text-gray-600' : 'text-gray-400'}`}>
+                                    {quiz.description}
+                                  </p>
+                                  {!quiz.isUnlocked && quiz.unlockReason && (
+                                    <p className="text-xs text-amber-600 mt-1">
+                                      🔒 {quiz.unlockReason}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <span className={`text-xs ${quiz.isUnlocked ? 'text-gray-500' : 'text-gray-400'}`}>
+                                  {quiz.timeLimit} min
+                                </span>
+                                <span className={`text-xs ${quiz.isUnlocked ? 'text-gray-500' : 'text-gray-400'}`}>
+                                  {quiz.passingScore}% to pass
+                                </span>
+                                {quiz.type === 'final_exam' && (
+                                  <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded">
+                                    🏆 Final Exam
+                                  </span>
+                                )}
+                                {quiz.isUnlocked ? (
+                                  <button 
+                                    onClick={() => router.push(`/learning/${courseId}/quiz/${quiz.id}`)}
+                                    className={`px-3 py-1 rounded text-sm transition-colors ${
+                                      quiz.type === 'final_exam'
+                                        ? 'bg-amber-600 text-white hover:bg-amber-700'
+                                        : 'bg-warm-copper text-white hover:bg-warm-bronze'
+                                    }`}
+                                  >
+                                    {quiz.type === 'final_exam' ? 'Start Final Exam' : 'Start Quiz'}
+                                  </button>
+                                ) : (
+                                  <button 
+                                    disabled
+                                    className="bg-gray-300 text-gray-500 px-3 py-1 rounded text-sm cursor-not-allowed"
+                                  >
+                                    Locked
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>

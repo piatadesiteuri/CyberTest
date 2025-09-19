@@ -461,4 +461,177 @@ export class ProgressService {
       return false;
     }
   }
+
+  // Check if quiz is unlocked for user
+  async isQuizUnlocked(userId: string, quizId: string): Promise<{
+    isUnlocked: boolean;
+    reason?: string;
+    requiredProgress?: number;
+    currentProgress?: number;
+  }> {
+    const db = DatabaseConnection.getInstance().getPool();
+    
+    try {
+      // Get quiz details
+      const [quizRows] = await db.execute(
+        `SELECT q.*, m.course_id, m.title as module_title 
+         FROM quizzes q 
+         JOIN modules m ON q.module_id = m.id 
+         WHERE q.id = ?`,
+        [quizId]
+      );
+
+      if ((quizRows as any[]).length === 0) {
+        return { isUnlocked: false, reason: 'Quiz not found' };
+      }
+
+      const quiz = (quizRows as any[])[0];
+      const courseId = quiz.course_id;
+
+      // Check course progress
+      const courseProgress = await this.getUserCourseProgress(userId, courseId);
+
+      // Different unlock conditions based on quiz type
+      switch (quiz.type) {
+        case 'post_assessment':
+          // Module quiz - unlock after completing all lessons in the module
+          const moduleProgress = await this.getModuleProgress(userId, quiz.module_id);
+          if (moduleProgress.completedLessons >= moduleProgress.totalLessons) {
+            return { isUnlocked: true };
+          } else {
+            return {
+              isUnlocked: false,
+              reason: `Complete all lessons in ${quiz.module_title} to unlock this quiz`,
+              requiredProgress: 100,
+              currentProgress: moduleProgress.overallProgress
+            };
+          }
+
+        case 'practice':
+          // Practice quiz - unlock after completing module quiz
+          const moduleQuizCompleted = await this.isModuleQuizCompleted(userId, quiz.module_id);
+          if (moduleQuizCompleted) {
+            return { isUnlocked: true };
+          } else {
+            return {
+              isUnlocked: false,
+              reason: `Complete the module assessment to unlock this practice quiz`,
+              requiredProgress: 100,
+              currentProgress: 0
+            };
+          }
+
+        case 'final_exam':
+          // Final exam - unlock only at 100% course progress
+          if (courseProgress.overallProgress >= 100) {
+            return { isUnlocked: true };
+          } else {
+            return {
+              isUnlocked: false,
+              reason: `Complete 100% of the course to unlock the final exam`,
+              requiredProgress: 100,
+              currentProgress: courseProgress.overallProgress
+            };
+          }
+
+        default:
+          return { isUnlocked: true }; // Other quiz types are always unlocked
+      }
+    } catch (error) {
+      console.error('Error checking quiz unlock status:', error);
+      return { isUnlocked: false, reason: 'Error checking unlock status' };
+    }
+  }
+
+  // Get module progress
+  async getModuleProgress(userId: string, moduleId: string): Promise<{
+    overallProgress: number;
+    completedLessons: number;
+    totalLessons: number;
+  }> {
+    const db = DatabaseConnection.getInstance().getPool();
+
+    // Get total lessons in module
+    const [totalRows] = await db.execute(
+      `SELECT COUNT(*) as total FROM lessons WHERE module_id = ? AND is_active = 1`,
+      [moduleId]
+    );
+
+    const totalLessons = (totalRows as {total: number}[])[0]?.total || 0;
+
+    // Get completed lessons
+    const [completedRows] = await db.execute(
+      `SELECT COUNT(*) as completed 
+       FROM user_progress up
+       JOIN lessons l ON up.lesson_id = l.id
+       WHERE up.user_id = ? AND l.module_id = ? AND up.status = 'completed'`,
+      [userId, moduleId]
+    );
+
+    const completedLessons = (completedRows as {completed: number}[])[0]?.completed || 0;
+    const overallProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
+    return {
+      overallProgress,
+      completedLessons,
+      totalLessons
+    };
+  }
+
+  // Check if module quiz is completed
+  async isModuleQuizCompleted(userId: string, moduleId: string): Promise<boolean> {
+    const db = DatabaseConnection.getInstance().getPool();
+
+    const [rows] = await db.execute(
+      `SELECT COUNT(*) as count
+       FROM user_progress up
+       JOIN quizzes q ON up.quiz_id = q.id
+       WHERE up.user_id = ? AND q.module_id = ? AND q.type = 'post_assessment' AND up.status = 'completed'`,
+      [userId, moduleId]
+    );
+
+    return (rows as {count: number}[])[0]?.count > 0;
+  }
+
+  // Get available quizzes for user (unlocked quizzes)
+  async getAvailableQuizzes(userId: string, courseId: string): Promise<{
+    unlocked: any[];
+    locked: any[];
+  }> {
+    const db = DatabaseConnection.getInstance().getPool();
+
+    // Get all quizzes for the course
+    const [quizRows] = await db.execute(
+      `SELECT q.*, m.title as module_title, m.\`order\` as module_order
+       FROM quizzes q
+       JOIN modules m ON q.module_id = m.id
+       WHERE m.course_id = ? AND q.is_active = 1
+       ORDER BY m.\`order\`, q.type, q.created_at`,
+      [courseId]
+    );
+
+    const quizzes = quizRows as any[];
+    const unlocked: any[] = [];
+    const locked: any[] = [];
+
+    for (const quiz of quizzes) {
+      const unlockStatus = await this.isQuizUnlocked(userId, quiz.id);
+      
+      if (unlockStatus.isUnlocked) {
+        unlocked.push({
+          ...quiz,
+          unlockReason: null
+        });
+      } else {
+        locked.push({
+          ...quiz,
+          unlockReason: unlockStatus.reason,
+          requiredProgress: unlockStatus.requiredProgress,
+          currentProgress: unlockStatus.currentProgress
+        });
+      }
+    }
+
+    return { unlocked, locked };
+  }
 }
