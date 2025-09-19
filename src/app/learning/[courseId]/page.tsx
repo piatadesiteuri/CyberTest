@@ -149,36 +149,48 @@ export default function CoursePage() {
               }))
             }
             
-            setCourse(courseWithProgress)
+            // Add quiz data to modules (from course data)
+            const courseWithQuizzes = {
+              ...courseWithProgress,
+              modules: courseWithProgress.modules.map((module: any) => ({
+                ...module,
+                quizzes: module.quiz ? [module.quiz] : []
+              }))
+            }
             
-            // Fetch available quizzes with unlock status
-            try {
-              const quizzesResponse = await fetch(`http://localhost:3001/api/progress/course/${courseId}/quizzes`, {
-                headers: {
-                  'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-              })
-              
-              if (quizzesResponse.ok) {
-                const quizzesData = await quizzesResponse.json()
-                console.log('🎯 Quizzes data received:', quizzesData.data)
+            setCourse(courseWithQuizzes)
+            
+            // Try to fetch unlock status for authenticated users
+            const token = localStorage.getItem('token')
+            if (token) {
+              try {
+                const quizzesResponse = await fetch(`http://localhost:3001/api/progress/course/${courseId}/quizzes`, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  }
+                })
                 
-                // Add quiz data to modules
-                const courseWithQuizzes = {
-                  ...courseWithProgress,
-                  modules: courseWithProgress.modules.map((module: any) => ({
-                    ...module,
-                    quizzes: [
-                      ...quizzesData.data.unlocked.filter((q: any) => q.module_id === module.id),
-                      ...quizzesData.data.locked.filter((q: any) => q.module_id === module.id)
-                    ]
-                  }))
+                if (quizzesResponse.ok) {
+                  const quizzesData = await quizzesResponse.json()
+                  console.log('🎯 Quizzes data received:', quizzesData.data)
+                  
+                  // Update quiz data with unlock status
+                  const courseWithUnlockStatus = {
+                    ...courseWithQuizzes,
+                    modules: courseWithQuizzes.modules.map((module: any) => ({
+                      ...module,
+                      quizzes: [
+                        ...quizzesData.data.unlocked.filter((q: any) => q.module_id === module.id),
+                        ...quizzesData.data.locked.filter((q: any) => q.module_id === module.id)
+                      ]
+                    }))
+                  }
+                  
+                  setCourse(courseWithUnlockStatus)
                 }
-                
-                setCourse(courseWithQuizzes)
+              } catch (quizError) {
+                console.log('⚠️ Could not fetch quiz unlock status, using basic quiz data:', quizError)
               }
-            } catch (quizError) {
-              console.log('⚠️ Could not fetch quizzes, using course data without quizzes:', quizError)
             }
           } catch (progressError) {
             console.error('⚠️ Error fetching progress, using course without progress:', progressError)
@@ -429,25 +441,25 @@ export default function CoursePage() {
                             <div 
                               key={quiz.id}
                               className={`flex items-center justify-between p-4 rounded-lg border ${
-                                quiz.isUnlocked 
+                                quiz.isUnlocked !== false
                                   ? 'bg-warm-copper/10 border-warm-copper/20' 
                                   : 'bg-gray-50 border-gray-200'
                               }`}
                             >
                               <div className="flex items-center space-x-3">
-                                {quiz.isUnlocked ? (
+                                {quiz.isUnlocked !== false ? (
                                   <Target className="w-5 h-5 text-warm-copper" />
                                 ) : (
                                   <Lock className="w-5 h-5 text-gray-400" />
                                 )}
                                 <div>
-                                  <h4 className={`font-medium ${quiz.isUnlocked ? 'text-gray-900' : 'text-gray-500'}`}>
+                                  <h4 className={`font-medium ${quiz.isUnlocked !== false ? 'text-gray-900' : 'text-gray-500'}`}>
                                     {quiz.title}
                                   </h4>
-                                  <p className={`text-sm ${quiz.isUnlocked ? 'text-gray-600' : 'text-gray-400'}`}>
+                                  <p className={`text-sm ${quiz.isUnlocked !== false ? 'text-gray-600' : 'text-gray-400'}`}>
                                     {quiz.description}
                                   </p>
-                                  {!quiz.isUnlocked && quiz.unlockReason && (
+                                  {quiz.isUnlocked === false && quiz.unlockReason && (
                                     <p className="text-xs text-amber-600 mt-1">
                                       🔒 {quiz.unlockReason}
                                     </p>
@@ -455,10 +467,10 @@ export default function CoursePage() {
                                 </div>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <span className={`text-xs ${quiz.isUnlocked ? 'text-gray-500' : 'text-gray-400'}`}>
+                                <span className={`text-xs ${quiz.isUnlocked !== false ? 'text-gray-500' : 'text-gray-400'}`}>
                                   {quiz.timeLimit} min
                                 </span>
-                                <span className={`text-xs ${quiz.isUnlocked ? 'text-gray-500' : 'text-gray-400'}`}>
+                                <span className={`text-xs ${quiz.isUnlocked !== false ? 'text-gray-500' : 'text-gray-400'}`}>
                                   {quiz.passingScore}% to pass
                                 </span>
                                 {quiz.type === 'final_exam' && (
@@ -466,7 +478,7 @@ export default function CoursePage() {
                                     🏆 Final Exam
                                   </span>
                                 )}
-                                {quiz.isUnlocked ? (
+                                {quiz.isUnlocked !== false ? (
                                   <button 
                                     onClick={() => router.push(`/learning/${courseId}/quiz/${quiz.id}`)}
                                     className={`px-3 py-1 rounded text-sm transition-colors ${

@@ -65,12 +65,18 @@ export default function QuizPage() {
   const [canRetake, setCanRetake] = useState(true)
 
   useEffect(() => {
-    // Check quiz unlock status first
+    // Check quiz unlock status first (only for authenticated users)
     const checkQuizUnlock = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // If no token, skip unlock check and proceed to load quiz
+        return;
+      }
+      
       try {
         const response = await fetch(`http://localhost:3001/api/progress/quiz/${quizId}/unlock`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           }
         });
         
