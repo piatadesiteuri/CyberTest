@@ -59,89 +59,63 @@ export default function QuizPage() {
   const [canRetake, setCanRetake] = useState(true)
 
   useEffect(() => {
-    // Mock data - replace with actual API call
-    const mockQuiz: Quiz = {
-      id: quizId as string,
-      title: 'Cybersecurity Fundamentals Quiz',
-      description: 'Test your understanding of basic cybersecurity concepts',
-      timeLimit: 15, // 15 minutes
-      passingScore: 70,
-      maxAttempts: 3,
-      questions: [
-        {
-          id: 'q1',
-          text: 'What does the "C" in the CIA Triad stand for?',
-          type: 'single_choice',
-          points: 10,
-          order: 1,
-          answers: [
-            { text: 'Confidentiality', isCorrect: true, explanation: 'Confidentiality ensures information is not disclosed to unauthorized individuals.' },
-            { text: 'Confidence', isCorrect: false, explanation: 'Confidence is not part of the CIA Triad.' },
-            { text: 'Control', isCorrect: false, explanation: 'Control is not part of the CIA Triad.' },
-            { text: 'Compliance', isCorrect: false, explanation: 'Compliance is not part of the CIA Triad.' }
-          ],
-          explanation: 'The CIA Triad consists of Confidentiality, Integrity, and Availability.'
-        },
-        {
-          id: 'q2',
-          text: 'Which of the following is NOT a type of malware?',
-          type: 'single_choice',
-          points: 10,
-          order: 2,
-          answers: [
-            { text: 'Virus', isCorrect: false, explanation: 'Viruses are a type of malware.' },
-            { text: 'Firewall', isCorrect: true, explanation: 'A firewall is a security device, not malware.' },
-            { text: 'Trojan', isCorrect: false, explanation: 'Trojans are a type of malware.' },
-            { text: 'Ransomware', isCorrect: false, explanation: 'Ransomware is a type of malware.' }
-          ],
-          explanation: 'A firewall is a security device that monitors and controls network traffic, not malicious software.'
-        },
-        {
-          id: 'q3',
-          text: 'Phishing is a type of social engineering attack.',
-          type: 'true_false',
-          points: 10,
-          order: 3,
-          answers: [
-            { text: 'True', isCorrect: true, explanation: 'Phishing uses psychological manipulation to trick people.' },
-            { text: 'False', isCorrect: false, explanation: 'Phishing is indeed a social engineering technique.' }
-          ],
-          explanation: 'Phishing is a social engineering attack that uses fraudulent communications to trick people into revealing sensitive information.'
-        },
-        {
-          id: 'q4',
-          text: 'What are the three main components of the CIA Triad? (Select all that apply)',
-          type: 'multiple_choice',
-          points: 15,
-          order: 4,
-          answers: [
-            { text: 'Confidentiality', isCorrect: true, explanation: 'Confidentiality is one of the three components.' },
-            { text: 'Integrity', isCorrect: true, explanation: 'Integrity is one of the three components.' },
-            { text: 'Availability', isCorrect: true, explanation: 'Availability is one of the three components.' },
-            { text: 'Authentication', isCorrect: false, explanation: 'Authentication is not part of the CIA Triad.' }
-          ],
-          explanation: 'The CIA Triad consists of Confidentiality, Integrity, and Availability.'
-        },
-        {
-          id: 'q5',
-          text: 'A strong password should contain at least 8 characters, including uppercase letters, lowercase letters, numbers, and special characters.',
-          type: 'true_false',
-          points: 10,
-          order: 5,
-          answers: [
-            { text: 'True', isCorrect: true, explanation: 'Strong passwords should include multiple character types.' },
-            { text: 'False', isCorrect: false, explanation: 'This is indeed a characteristic of strong passwords.' }
-          ],
-          explanation: 'Strong passwords should be at least 8 characters long and include a mix of uppercase, lowercase, numbers, and special characters.'
+    // Fetch quiz data from API
+    const fetchQuiz = async () => {
+      try {
+        console.log('🎯 Fetching quiz with ID:', quizId);
+        const response = await fetch(`http://localhost:3001/api/courses/${courseId}`);
+        const data = await response.json();
+        
+        if (data.success && data.course) {
+          console.log('📊 Course data received:', data.course);
+          
+          // Find the quiz in the course modules
+          let foundQuiz = null;
+          for (const module of data.course.modules) {
+            if (module.quiz && module.quiz.id === quizId) {
+              foundQuiz = module.quiz;
+              break;
+            }
+          }
+          
+          if (foundQuiz) {
+            console.log('✅ Quiz found:', foundQuiz.title);
+            console.log('❓ Questions count:', foundQuiz.questions.length);
+            setQuiz(foundQuiz);
+            setTimeLeft((foundQuiz.timeLimit || 15) * 60); // Convert minutes to seconds
+          } else {
+            console.log('❌ Quiz not found in course modules');
+            // Fallback to mock data
+            setQuiz(mockQuiz);
+            setTimeLeft(15 * 60);
+          }
+        } else {
+          console.log('❌ Failed to fetch course data, using mock data');
+          setQuiz(mockQuiz);
+          setTimeLeft(15 * 60);
         }
-      ]
-    }
+      } catch (error) {
+        console.error('❌ Error fetching quiz:', error);
+        setQuiz(mockQuiz);
+        setTimeLeft(15 * 60);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setQuiz(mockQuiz)
-    setTimeLeft(mockQuiz.timeLimit * 60) // Convert to seconds
-    setRetakeTimer(15 * 60) // 15 minutes for retake
-    setLoading(false)
-  }, [quizId])
+    fetchQuiz();
+  }, [courseId, quizId]);
+
+  // Mock data as fallback
+  const mockQuiz: Quiz = {
+    id: quizId as string,
+    title: 'Cybersecurity Fundamentals Quiz',
+    description: 'Test your understanding of basic cybersecurity concepts',
+    timeLimit: 15, // 15 minutes
+    passingScore: 70,
+    maxAttempts: 3,
+    questions: []
+  };
 
   useEffect(() => {
     if (timeLeft > 0 && !isSubmitted) {
@@ -253,7 +227,7 @@ export default function QuizPage() {
     
     setAnswers({})
     setCurrentQuestionIndex(0)
-    setTimeLeft(quiz?.timeLimit * 60 || 0)
+    setTimeLeft((quiz?.timeLimit || 15) * 60)
     setIsSubmitted(false)
     setShowResults(false)
     setQuizResult(null)
@@ -360,30 +334,44 @@ export default function QuizPage() {
               </p>
             </div>
 
-            {/* Question Results - Only show correct count */}
+            {/* Quiz Results Summary */}
             <div className="space-y-6 mb-8">
-              <h3 className="text-xl font-bold text-gray-900">Quiz Summary</h3>
-              <div className="bg-gray-50 rounded-lg p-6">
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <div className="text-3xl font-bold text-warm-copper">
-                      {quiz.questions.filter((question, index) => {
-                        const userAnswer = answers[question.id]
-                        const correctAnswer = question.answers.find(a => a.isCorrect)
-                        return question.type === 'multiple_choice' 
-                          ? question.answers.filter(a => a.isCorrect).every(a => 
-                              Array.isArray(userAnswer) && userAnswer.includes(a.text)
-                            ) && question.answers.filter(a => a.isCorrect).length === (Array.isArray(userAnswer) ? userAnswer.length : 0)
-                          : userAnswer === correctAnswer?.text
-                      }).length}
-                    </div>
-                    <div className="text-sm text-gray-600">Correct Answers</div>
+              <h3 className="text-xl font-bold text-gray-900">Quiz Results</h3>
+              
+              {/* Summary Stats */}
+              <div className="bg-gray-50 rounded-lg p-8">
+                <div className="text-center">
+                  <div className="text-6xl font-bold text-warm-copper mb-4">
+                    {quiz.questions.filter((question, index) => {
+                      const userAnswer = answers[question.id]
+                      const correctAnswer = question.answers.find(a => a.isCorrect)
+                      return question.type === 'multiple_choice' 
+                        ? question.answers.filter(a => a.isCorrect).every(a => 
+                            Array.isArray(userAnswer) && userAnswer.includes(a.text)
+                          ) && question.answers.filter(a => a.isCorrect).length === (Array.isArray(userAnswer) ? userAnswer.length : 0)
+                        : userAnswer === correctAnswer?.text
+                    }).length}/{quiz.questions.length}
                   </div>
-                  <div>
-                    <div className="text-3xl font-bold text-gray-600">
-                      {quiz.questions.length}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Questions</div>
+                  <div className="text-lg text-gray-600 mb-2">Correct Answers</div>
+                  <div className="text-sm text-gray-500">
+                    {quiz.questions.filter((question, index) => {
+                      const userAnswer = answers[question.id]
+                      const correctAnswer = question.answers.find(a => a.isCorrect)
+                      return question.type === 'multiple_choice' 
+                        ? question.answers.filter(a => a.isCorrect).every(a => 
+                            Array.isArray(userAnswer) && userAnswer.includes(a.text)
+                          ) && question.answers.filter(a => a.isCorrect).length === (Array.isArray(userAnswer) ? userAnswer.length : 0)
+                        : userAnswer === correctAnswer?.text
+                    }).length === quiz.questions.length ? 'Perfect! All answers correct!' : 
+                    quiz.questions.filter((question, index) => {
+                      const userAnswer = answers[question.id]
+                      const correctAnswer = question.answers.find(a => a.isCorrect)
+                      return question.type === 'multiple_choice' 
+                        ? question.answers.filter(a => a.isCorrect).every(a => 
+                            Array.isArray(userAnswer) && userAnswer.includes(a.text)
+                          ) && question.answers.filter(a => a.isCorrect).length === (Array.isArray(userAnswer) ? userAnswer.length : 0)
+                        : userAnswer === correctAnswer?.text
+                    }).length === 0 ? 'Keep studying and try again!' : 'Good effort! Review the material and try again.'}
                   </div>
                 </div>
               </div>
@@ -486,48 +474,88 @@ export default function QuizPage() {
 
         {/* Question */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">
-            {currentQuestion.text}
-          </h3>
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-warm-copper text-white rounded-full flex items-center justify-center text-sm font-bold">
+                  {currentQuestionIndex + 1}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-700">Question {currentQuestionIndex + 1}</h3>
+                  <p className="text-sm text-gray-500">{currentQuestion.points} point{currentQuestion.points > 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              <div className="text-sm text-gray-500">
+                {Math.round(((currentQuestionIndex + 1) / quiz.questions.length) * 100)}% Complete
+              </div>
+            </div>
+            <div className="prose prose-lg max-w-none text-gray-900" 
+                 dangerouslySetInnerHTML={{ 
+                   __html: currentQuestion.text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-warm-copper">$1</strong>')
+                                             .replace(/\n/g, '<br/>')
+                 }} 
+            />
+          </div>
 
-          <div className="space-y-4">
-            {currentQuestion.answers.map((answer, index) => (
-              <label
-                key={index}
-                className={`block p-4 border rounded-lg cursor-pointer transition-colors ${
-                  (Array.isArray(answers[currentQuestion.id]) 
-                    ? answers[currentQuestion.id].includes(answer.text)
-                    : answers[currentQuestion.id] === answer.text)
-                    ? 'border-warm-copper bg-warm-copper/10'
-                    : 'border-gray-200 hover:border-warm-copper/50'
-                }`}
-              >
-                <input
-                  type={currentQuestion.type === 'multiple_choice' ? 'checkbox' : 'radio'}
-                  name={`question-${currentQuestion.id}`}
-                  value={answer.text}
-                  checked={
-                    currentQuestion.type === 'multiple_choice'
-                      ? Array.isArray(answers[currentQuestion.id]) && answers[currentQuestion.id].includes(answer.text)
-                      : answers[currentQuestion.id] === answer.text
-                  }
-                  onChange={(e) => {
-                    if (currentQuestion.type === 'multiple_choice') {
-                      const currentAnswers = Array.isArray(answers[currentQuestion.id]) ? answers[currentQuestion.id] : []
-                      if (e.target.checked) {
-                        handleAnswerChange(currentQuestion.id, [...currentAnswers, answer.text])
+          <div className="space-y-3">
+            {currentQuestion.answers.map((answer, index) => {
+              const isSelected = currentQuestion.type === 'multiple_choice'
+                ? Array.isArray(answers[currentQuestion.id]) && answers[currentQuestion.id].includes(answer.text)
+                : answers[currentQuestion.id] === answer.text
+              
+              return (
+                <label
+                  key={index}
+                  className={`block p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                    isSelected
+                      ? 'border-warm-copper bg-gradient-to-r from-warm-copper/5 to-warm-bronze/5 shadow-md' 
+                      : 'border-gray-200 hover:border-warm-copper/50 hover:bg-warm-copper/5 hover:shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-start">
+                    <div className={`w-6 h-6 rounded-full border-2 mr-4 mt-0.5 flex items-center justify-center transition-colors ${
+                      isSelected
+                        ? 'border-warm-copper bg-warm-copper' 
+                        : 'border-gray-300'
+                    }`}>
+                      {isSelected && (
+                        <div className="w-3 h-3 bg-white rounded-full"></div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-500">
+                          {String.fromCharCode(65 + index)}.
+                        </span>
+                        {isSelected && (
+                          <div className="w-2 h-2 bg-warm-copper rounded-full"></div>
+                        )}
+                      </div>
+                      <p className="text-gray-800 mt-1 leading-relaxed">{answer.text}</p>
+                    </div>
+                  </div>
+                  <input
+                    type={currentQuestion.type === 'multiple_choice' ? 'checkbox' : 'radio'}
+                    name={`question-${currentQuestion.id}`}
+                    value={answer.text}
+                    checked={isSelected}
+                    onChange={(e) => {
+                      if (currentQuestion.type === 'multiple_choice') {
+                        const currentAnswers = Array.isArray(answers[currentQuestion.id]) ? answers[currentQuestion.id] as string[] : []
+                        if (e.target.checked) {
+                          handleAnswerChange(currentQuestion.id, [...currentAnswers, answer.text])
+                        } else {
+                          handleAnswerChange(currentQuestion.id, currentAnswers.filter((a: string) => a !== answer.text))
+                        }
                       } else {
-                        handleAnswerChange(currentQuestion.id, currentAnswers.filter(a => a !== answer.text))
+                        handleAnswerChange(currentQuestion.id, answer.text)
                       }
-                    } else {
-                      handleAnswerChange(currentQuestion.id, answer.text)
-                    }
-                  }}
-                  className="sr-only"
-                />
-                <span className="text-gray-900">{answer.text}</span>
-              </label>
-            ))}
+                    }}
+                    className="sr-only"
+                  />
+                </label>
+              )
+            })}
           </div>
         </div>
 

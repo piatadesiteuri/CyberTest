@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { BookOpen, Clock, CheckCircle, ArrowLeft, ArrowRight, Play, Pause, RotateCcw } from 'lucide-react'
+import { progressService } from '@/services/progressService'
+import { BookOpen, Clock, CheckCircle, ArrowLeft, ArrowRight, Play, Pause, RotateCcw, X } from 'lucide-react'
 
 interface Lesson {
   id: string
@@ -72,10 +73,28 @@ export default function LessonPage() {
         
         if (foundLesson) {
           console.log('✅ Lesson found:', foundLesson)
-          setLesson(foundLesson)
-          setCourse(courseData.course)
-          setTimeSpent(foundLesson.userProgress?.timeSpent || 0)
-          setIsCompleted(foundLesson.userProgress?.status === 'completed')
+          
+          // Check if lesson is completed by fetching progress
+          try {
+            const progressResponse = await progressService.getLessonProgress(lessonId as string)
+            console.log('📈 Lesson progress:', progressResponse.data)
+            
+            const isLessonCompleted = progressResponse.data?.status === 'completed'
+            const lessonTimeSpent = progressResponse.data?.timeSpent || 0
+            
+            setLesson(foundLesson)
+            setCourse(courseData.course)
+            setTimeSpent(lessonTimeSpent)
+            setIsCompleted(isLessonCompleted)
+            
+            console.log('🎯 Lesson completion status:', isLessonCompleted)
+          } catch (progressError) {
+            console.log('⚠️ Could not fetch lesson progress, assuming not completed:', progressError)
+            setLesson(foundLesson)
+            setCourse(courseData.course)
+            setTimeSpent(0)
+            setIsCompleted(false)
+          }
         } else {
           console.log('❌ Lesson not found in course data')
           setLesson(null)
@@ -96,32 +115,70 @@ export default function LessonPage() {
     let interval: NodeJS.Timeout
     if (isPlaying && !isCompleted) {
       interval = setInterval(() => {
-        setTimeSpent(prev => prev + 1)
+        setTimeSpent(prev => {
+          const newTime = prev + 1
+          // Save time spent every 30 seconds
+          if (newTime % 30 === 0 && lesson && user) {
+            progressService.updateLessonTime(lesson.id, newTime).catch(console.error)
+          }
+          return newTime
+        })
       }, 1000)
     }
     return () => clearInterval(interval)
-  }, [isPlaying, isCompleted])
+  }, [isPlaying, isCompleted, lesson, user])
 
   const handleComplete = async () => {
-    if (!lesson || !user) return
+    if (!lesson || !user || !course) return
 
     try {
-      // TODO: Replace with actual API call
       console.log('Completing lesson:', lesson.id, 'for user:', user.id)
+      
+      // Find the module that contains this lesson
+      const module = course.modules.find(m => 
+        m.lessons.some(l => l.id === lesson.id)
+      )
+      
+      if (!module) {
+        console.error('Module not found for lesson:', lesson.id)
+        return
+      }
+
+      // Save progress to database
+      await progressService.markLessonComplete(
+        lesson.id,
+        course.id,
+        module.id,
+        timeSpent
+      )
       
       setIsCompleted(true)
       setIsPlaying(false)
       
-      // Here you would save to database:
-      // await learningService.updateUserProgress({
-      //   userId: user.id,
-      //   lessonId: lesson.id,
-      //   status: 'completed',
-      //   timeSpent: timeSpent
-      // })
-      
+      console.log('✅ Lesson completed successfully')
     } catch (error) {
-      console.error('Error completing lesson:', error)
+      console.error('❌ Error completing lesson:', error)
+      // Still mark as completed locally for better UX
+      setIsCompleted(true)
+      setIsPlaying(false)
+    }
+  }
+
+  const handleUnmark = async () => {
+    if (!lesson || !user) return
+
+    try {
+      console.log('Unmarking lesson:', lesson.id, 'for user:', user.id)
+      
+      // Call the API to unmark the lesson
+      await progressService.unmarkLessonComplete(lesson.id)
+      
+      setIsCompleted(false)
+      setIsPlaying(false)
+      
+      console.log('✅ Lesson unmarked successfully')
+    } catch (error) {
+      console.error('❌ Error unmarking lesson:', error)
     }
   }
 
@@ -250,7 +307,7 @@ export default function LessonPage() {
                     .replace(/\n\n/g, '</p><p class="mb-4">')
                     .replace(/\n/g, '<br>')
                     .replace(/^(?!<[h|l])/gm, '<p class="mb-4">')
-                    .replace(/(<li.*<\/li>)/gs, '<ul class="list-disc list-inside mb-4 space-y-1">$1</ul>')
+                    .replace(/(<li.*<\/li>)/g, '<ul class="list-disc list-inside mb-4 space-y-1">$1</ul>')
                     .replace(/(<h[1-6].*<\/h[1-6]>)/g, '$1')
                 }} 
               />
@@ -296,13 +353,26 @@ export default function LessonPage() {
                     <span>Mark Complete</span>
                   </button>
                 ) : (
-                  <button
-                    onClick={handleNext}
-                    className="bg-warm-copper text-white px-6 py-2 rounded-lg hover:bg-warm-bronze transition-colors flex items-center space-x-2"
-                  >
-                    <span>Next</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2 text-warm-copper bg-warm-copper/10 px-4 py-2 rounded-lg">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="font-medium">Read</span>
+                    </div>
+                    <button
+                      onClick={handleUnmark}
+                      className="text-warm-copper hover:text-warm-bronze transition-colors flex items-center space-x-2 border border-warm-copper px-4 py-2 rounded-lg hover:bg-warm-copper/5"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>Unmark</span>
+                    </button>
+                    <button
+                      onClick={handleNext}
+                      className="bg-warm-copper text-white px-6 py-2 rounded-lg hover:bg-warm-bronze transition-colors flex items-center space-x-2"
+                    >
+                      <span>Next</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

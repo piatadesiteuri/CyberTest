@@ -22,6 +22,7 @@
     "db:create-learning": "ts-node --project tsconfig.backend.json src/backend/scripts/createLearningTables.ts",
     "db:create-phishing": "ts-node --project tsconfig.backend.json src/backend/scripts/createPhishingTables.ts",
     "db:seed-phishing": "ts-node --project tsconfig.backend.json src/backend/scripts/seedPhishingData.ts",
+    "db:create-advanced-quiz": "ts-node --project tsconfig.backend.json src/backend/scripts/createAdvancedQuiz.ts",
     "dev:full": "concurrently \"npm run backend:dev\" \"npm run frontend\"",
     "dev:backend": "npm run backend:dev",
     "dev:frontend": "npm run frontend"
