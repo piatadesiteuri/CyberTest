@@ -1,7 +1,9 @@
 import mysql from 'mysql2/promise'
-import { databaseConfig } from '../../config/database'
+import dotenv from 'dotenv'
 import { PhishingCampaign, PhishingTemplate, PhishingResult, PhishingReport } from '../entities/PhishingCampaign'
 import { v4 as uuidv4 } from 'uuid'
+
+dotenv.config();
 
 export class PhishingService {
   private connection: mysql.Connection
@@ -12,7 +14,13 @@ export class PhishingService {
 
   async connect() {
     if (!this.connection) {
-      this.connection = await mysql.createConnection(databaseConfig)
+      this.connection = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '3306'),
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'ddd',
+        database: process.env.DB_NAME || 'cyber',
+      })
     }
   }
 

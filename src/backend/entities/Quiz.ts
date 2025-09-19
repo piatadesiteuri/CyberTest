@@ -11,6 +11,22 @@ export enum QuizStatus {
   ARCHIVED = 'archived'
 }
 
+// Type alias for Question to avoid circular dependency
+type Question = {
+  id: string
+  quizId: string
+  text: string
+  type: string
+  answers: any[]
+  explanation: string
+  points: number
+  order: number
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+
 export interface Quiz {
   id: string
   moduleId: string

@@ -18,12 +18,6 @@ export default function HeroSection() {
         <p className="text-xl md:text-2xl text-harmony-cream mb-8 max-w-3xl mx-auto">
           Unified, scalable, and automated architecture for cybersecurity training and awareness. Centralized hub for training, simulations, reporting, and user administration.
         </p>
-        
-        {/* CTA Button */}
--        <Link href="/dashboard" className="inline-block bg-white text-harmony-dark hover:bg-harmony-cream font-bold py-4 px-8 rounded-lg text-lg transition-colors shadow-lg hover:shadow-xl mb-12">
-          Access Dashboard
-          <ArrowRight className="inline ml-2 h-5 w-5" />
-        </Link>
 
         {/* Hero Image Placeholder */}
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 max-w-4xl mx-auto">

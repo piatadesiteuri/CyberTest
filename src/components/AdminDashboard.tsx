@@ -11,35 +11,20 @@ import RecentActivity from './RecentActivity'
 import UserManagement from './UserManagement'
 import SocialEngineeringSims from './SocialEngineeringSims'
 import ReportingAnalytics from './ReportingAnalytics'
+import CourseManagement from './CourseManagement'
+
+export type TabType = 'dashboard' | 'training' | 'simulations' | 'users' | 'security' | 'reports' | 'settings'
 
 export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { user, isAdmin } = useAuth()
+  const [activeTab, setActiveTab] = useState<TabType>('dashboard')
+  const { user } = useAuth()
 
-  if (!isAdmin()) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
-          <p className="text-gray-600">You don't have permission to access this page.</p>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex h-screen bg-transparent">
-      {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
-        
-        {/* Dashboard Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
-          <div className="max-w-7xl mx-auto">
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return (
+          <>
             {/* Welcome Section */}
             <div className="mb-8">
               <div className="flex items-center justify-between">
@@ -76,12 +61,6 @@ export default function AdminDashboard() {
               {/* Social Engineering Simulations */}
               <SocialEngineeringSims />
               
-              {/* User Management */}
-              <UserManagement />
-              
-              {/* Reporting & Analytics */}
-              <ReportingAnalytics />
-              
               {/* Recent Activity */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
@@ -92,6 +71,92 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
+          </>
+        )
+      
+      case 'training':
+        return (
+          <div className="space-y-6">
+            <CourseManagement />
+          </div>
+        )
+      
+      case 'simulations':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-white">Phishing Simulations</h1>
+            </div>
+            <SocialEngineeringSims />
+          </div>
+        )
+      
+      case 'users':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-white">User Management</h1>
+            </div>
+            <UserManagement />
+          </div>
+        )
+      
+      case 'security':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-white">Security Alerts</h1>
+            </div>
+            <SecurityAlerts />
+          </div>
+        )
+      
+      case 'reports':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-white">Reports & Analytics</h1>
+            </div>
+            <ReportingAnalytics />
+          </div>
+        )
+      
+      case 'settings':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-white">Settings</h1>
+            </div>
+            <div className="bg-harmony-dark/20 backdrop-blur-sm rounded-lg p-6 border border-harmony-cream/20">
+              <p className="text-harmony-cream">Settings panel will be implemented here.</p>
+            </div>
+          </div>
+        )
+      
+      default:
+        return null
+    }
+  }
+
+  return (
+    <div className="flex h-screen bg-transparent">
+      {/* Sidebar */}
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+      
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
+        
+        {/* Dashboard Content */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
+          <div className="max-w-7xl mx-auto">
+            {renderTabContent()}
           </div>
         </main>
       </div>

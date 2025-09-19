@@ -1,23 +1,26 @@
 'use client'
 
 import { X, Home, Users, Shield, BarChart3, Settings, FileText, Target } from 'lucide-react'
+import { TabType } from './AdminDashboard'
 
 interface SidebarProps {
   isOpen: boolean
   onClose: () => void
+  activeTab: TabType
+  onTabChange: (tab: TabType) => void
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '#', icon: Home, current: true },
-  { name: 'Training Programs', href: '#', icon: FileText, current: false },
-  { name: 'Simulations', href: '#', icon: Target, current: false },
-  { name: 'Users', href: '#', icon: Users, current: false },
-  { name: 'Security Alerts', href: '#', icon: Shield, current: false },
-  { name: 'Reports', href: '#', icon: BarChart3, current: false },
-  { name: 'Settings', href: '#', icon: Settings, current: false },
+  { name: 'Dashboard', tab: 'dashboard' as TabType, icon: Home },
+  { name: 'Training Programs', tab: 'training' as TabType, icon: FileText },
+  { name: 'Simulations', tab: 'simulations' as TabType, icon: Target },
+  { name: 'Users', tab: 'users' as TabType, icon: Users },
+  { name: 'Security Alerts', tab: 'security' as TabType, icon: Shield },
+  { name: 'Reports', tab: 'reports' as TabType, icon: BarChart3 },
+  { name: 'Settings', tab: 'settings' as TabType, icon: Settings },
 ]
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: SidebarProps) {
   return (
     <>
       {/* Mobile backdrop */}
@@ -57,13 +60,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <nav className="flex-1 px-4 py-6 space-y-2">
             {navigation.map((item) => {
               const Icon = item.icon
+              const isActive = activeTab === item.tab
               return (
-                <a
+                <button
                   key={item.name}
-                  href={item.href}
+                  onClick={() => {
+                    onTabChange(item.tab)
+                    onClose() // Close sidebar on mobile after selection
+                  }}
                   className={`
-                    group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
-                    ${item.current 
+                    group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors w-full text-left
+                    ${isActive 
                       ? 'bg-white/20 text-white' 
                       : 'text-harmony-cream hover:bg-white/10 hover:text-white'
                     }
@@ -71,7 +78,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 >
                   <Icon className="mr-3 h-5 w-5" />
                   {item.name}
-                </a>
+                </button>
               )
             })}
           </nav>

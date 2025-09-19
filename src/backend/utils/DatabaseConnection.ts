@@ -42,6 +42,16 @@ class DatabaseConnection {
     }
   }
 
+  public async query(sql: string, params?: any[]): Promise<any[]> {
+    const connection = await this.pool.getConnection();
+    try {
+      const [rows] = await connection.execute(sql, params);
+      return rows as any[];
+    } finally {
+      connection.release();
+    }
+  }
+
   public async close(): Promise<void> {
     await this.pool.end();
   }

@@ -5,6 +5,7 @@ import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 import { CourseController } from './controllers/CourseController'
 import { PhishingController } from './controllers/PhishingController';
+import { AdminController } from './controllers/AdminController';
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ const dbConfig = {
 let db: mysql.Connection | null = null;
 const courseController = new CourseController();
 const phishingController = new PhishingController();
+const adminController = new AdminController();
 
 // Connect to database
 const connectDB = async () => {
@@ -37,8 +39,25 @@ const connectDB = async () => {
 // Middleware
 app.use(cors({
   origin: 'http://localhost:3000',
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
 }));
+
+// Handle preflight requests - use middleware instead of specific route
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 app.use(express.json());
 
 // Health check
@@ -207,6 +226,30 @@ app.post('/api/phishing/track/open', (req, res) => phishingController.trackEmail
 app.post('/api/phishing/track/click', (req, res) => phishingController.trackLinkClick(req, res));
 app.get('/api/phishing/campaigns/:campaignId/report', (req, res) => phishingController.generateReport(req, res));
 app.get('/api/phishing/campaigns/:campaignId/results', (req, res) => phishingController.getResultsByCampaign(req, res));
+
+// Admin routes (temporarily without auth for testing)
+app.get('/api/admin/dashboard/metrics', (req, res) => adminController.getDashboardMetrics(req, res));
+app.get('/api/admin/users/groups', (req, res) => adminController.getUserGroups(req, res));
+app.get('/api/admin/users/enrollments', (req, res) => adminController.getRecentEnrollments(req, res));
+app.get('/api/admin/security/alerts', (req, res) => adminController.getSecurityAlerts(req, res));
+app.put('/api/admin/security/alerts/:alertId', (req, res) => adminController.updateAlertStatus(req, res));
+app.get('/api/admin/training/programs', (req, res) => adminController.getTrainingPrograms(req, res));
+app.post('/api/admin/training/programs', (req, res) => adminController.createTrainingProgram(req, res));
+app.put('/api/admin/training/programs/:programId', (req, res) => adminController.updateTrainingProgram(req, res));
+app.get('/api/admin/simulations', (req, res) => adminController.getSimulations(req, res));
+app.post('/api/admin/simulations/:simulationId/start', (req, res) => adminController.startSimulation(req, res));
+app.post('/api/admin/simulations/:simulationId/pause', (req, res) => adminController.pauseSimulation(req, res));
+app.put('/api/admin/simulations/:simulationId/configure', (req, res) => adminController.configureSimulation(req, res));
+app.get('/api/admin/reports/metrics', (req, res) => adminController.getKeyMetrics(req, res));
+app.get('/api/admin/reports', (req, res) => adminController.getReports(req, res));
+app.post('/api/admin/reports/generate', (req, res) => adminController.generateReport(req, res));
+app.get('/api/admin/reports/:reportId/download', (req, res) => adminController.downloadReport(req, res));
+app.get('/api/admin/activity/recent', (req, res) => adminController.getRecentActivity(req, res));
+app.get('/api/admin/activity/log', (req, res) => adminController.getActivityLog(req, res));
+app.get('/api/admin/system/status', (req, res) => adminController.getSystemStatus(req, res));
+app.post('/api/admin/users/groups', (req, res) => adminController.createUserGroup(req, res));
+app.post('/api/admin/users/groups/add', (req, res) => adminController.addUserToGroup(req, res));
+app.post('/api/admin/users/groups/remove', (req, res) => adminController.removeUserFromGroup(req, res));
 
 // Start server
 const startServer = async () => {

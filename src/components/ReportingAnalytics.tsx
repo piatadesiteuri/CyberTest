@@ -1,76 +1,8 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { BarChart3, TrendingUp, TrendingDown, Download, Calendar, Users, Shield, Target } from 'lucide-react'
-
-const reports = [
-  {
-    id: 1,
-    name: 'Monthly Security Report',
-    type: 'Comprehensive',
-    period: 'January 2024',
-    status: 'ready',
-    lastGenerated: '2024-01-15',
-    icon: BarChart3,
-  },
-  {
-    id: 2,
-    name: 'Training Progress Report',
-    type: 'Training',
-    period: 'Q1 2024',
-    status: 'generating',
-    lastGenerated: '2024-01-14',
-    icon: Users,
-  },
-  {
-    id: 3,
-    name: 'Simulation Results',
-    type: 'Simulations',
-    period: 'Last 30 days',
-    status: 'ready',
-    lastGenerated: '2024-01-15',
-    icon: Target,
-  },
-  {
-    id: 4,
-    name: 'Risk Assessment',
-    type: 'Risk Analysis',
-    period: 'January 2024',
-    status: 'ready',
-    lastGenerated: '2024-01-13',
-    icon: Shield,
-  },
-]
-
-const keyMetrics = [
-  {
-    name: 'Overall Risk Score',
-    value: 'Low',
-    change: '-8%',
-    trend: 'down',
-    color: 'text-green-600',
-  },
-  {
-    name: 'Training Completion',
-    value: '89%',
-    change: '+5%',
-    trend: 'up',
-    color: 'text-blue-600',
-  },
-  {
-    name: 'Phishing Click Rate',
-    value: '12.5%',
-    change: '-3%',
-    trend: 'down',
-    color: 'text-green-600',
-  },
-  {
-    name: 'Active Users',
-    value: '1,247',
-    change: '+12%',
-    trend: 'up',
-    color: 'text-blue-600',
-  },
-]
+import { adminService, KeyMetrics, ReportData, SystemStatus } from '@/services/adminService'
 
 const getStatusBadge = (status: string) => {
   const baseClasses = "px-2 py-1 text-xs font-medium rounded-full"
@@ -95,6 +27,107 @@ const getTrendIcon = (trend: string) => {
 }
 
 export default function ReportingAnalytics() {
+  const [keyMetrics, setKeyMetrics] = useState<KeyMetrics[]>([])
+  const [reports, setReports] = useState<ReportData[]>([])
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const [metricsData, reportsData, statusData] = await Promise.all([
+          adminService.getKeyMetrics(),
+          adminService.getReports(),
+          adminService.getSystemStatus()
+        ])
+        setKeyMetrics(metricsData)
+        setReports(reportsData)
+        setSystemStatus(statusData)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch reporting data')
+        console.error('Error fetching reporting data:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  const handleGenerateReport = async () => {
+    try {
+      const result = await adminService.generateReport('comprehensive', 'last_30_days')
+      console.log('Report generation started:', result)
+      // In a real app, you might show a toast notification or update the UI
+    } catch (err) {
+      console.error('Error generating report:', err)
+    }
+  }
+
+  const handleDownloadReport = async (reportId: string) => {
+    try {
+      const result = await adminService.downloadReport(reportId)
+      console.log('Download initiated:', result)
+      // In a real app, you would trigger the download
+    } catch (err) {
+      console.error('Error downloading report:', err)
+    }
+  }
+
+  const getReportIcon = (type: string) => {
+    switch (type) {
+      case 'Comprehensive':
+        return BarChart3
+      case 'Training':
+        return Users
+      case 'Simulations':
+        return Target
+      case 'Risk Analysis':
+        return Shield
+      default:
+        return BarChart3
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="card">
+          <div className="animate-pulse">
+            <div className="h-6 bg-gray-200 rounded w-48 mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="text-center">
+                  <div className="bg-gray-200 p-4 rounded-lg mb-3 h-16"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-1"></div>
+                  <div className="h-3 bg-gray-200 rounded w-20 mx-auto"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="card">
+        <div className="text-center py-8">
+          <p className="text-red-600 mb-4">Failed to load reporting data</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="btn-primary"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Key Metrics */}
@@ -134,7 +167,7 @@ export default function ReportingAnalytics() {
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-harmony-dark">Reports</h2>
-          <button className="btn-primary">
+          <button className="btn-primary" onClick={handleGenerateReport}>
             <BarChart3 className="h-4 w-4 mr-2" />
             Generate Report
           </button>
@@ -142,7 +175,7 @@ export default function ReportingAnalytics() {
         
         <div className="space-y-4">
           {reports.map((report) => {
-            const Icon = report.icon
+            const Icon = getReportIcon(report.type)
             return (
               <div key={report.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                 <div className="flex items-center space-x-4">
@@ -160,7 +193,10 @@ export default function ReportingAnalytics() {
                     {report.status}
                   </span>
                   {report.status === 'ready' && (
-                    <button className="btn-secondary">
+                    <button 
+                      className="btn-secondary"
+                      onClick={() => handleDownloadReport(report.id)}
+                    >
                       <Download className="h-4 w-4 mr-2" />
                       Download
                     </button>
@@ -185,17 +221,23 @@ export default function ReportingAnalytics() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <h3 className="font-medium text-gray-900 mb-2">Active Simulations</h3>
-            <p className="text-3xl font-bold text-harmony-dark">3</p>
+            <p className="text-3xl font-bold text-harmony-dark">
+              {systemStatus?.activeSimulations || 0}
+            </p>
             <p className="text-sm text-gray-500">Running campaigns</p>
           </div>
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <h3 className="font-medium text-gray-900 mb-2">Users Online</h3>
-            <p className="text-3xl font-bold text-harmony-dark">247</p>
+            <p className="text-3xl font-bold text-harmony-dark">
+              {systemStatus?.activeUsers || 0}
+            </p>
             <p className="text-sm text-gray-500">Currently active</p>
           </div>
           <div className="text-center p-4 bg-gray-50 rounded-lg">
             <h3 className="font-medium text-gray-900 mb-2">Alerts Today</h3>
-            <p className="text-3xl font-bold text-harmony-dark">12</p>
+            <p className="text-3xl font-bold text-harmony-dark">
+              {systemStatus?.alertsToday || 0}
+            </p>
             <p className="text-sm text-gray-500">Security events</p>
           </div>
         </div>

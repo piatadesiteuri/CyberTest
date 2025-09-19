@@ -1,42 +1,100 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Users, Shield, Target, TrendingUp } from 'lucide-react'
-
-const metrics = [
-  {
-    name: 'Total Users',
-    value: '1,247',
-    change: '+12%',
-    changeType: 'positive',
-    icon: Users,
-  },
-  {
-    name: 'Training Completed',
-    value: '89%',
-    change: '+5%',
-    changeType: 'positive',
-    icon: Shield,
-  },
-  {
-    name: 'Simulations Run',
-    value: '156',
-    change: '+23',
-    changeType: 'positive',
-    icon: Target,
-  },
-  {
-    name: 'Risk Score',
-    value: 'Low',
-    change: '-8%',
-    changeType: 'positive',
-    icon: TrendingUp,
-  },
-]
+import { adminService, DashboardMetrics } from '@/services/adminService'
 
 export default function MetricsOverview() {
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        setLoading(true)
+        const data = await adminService.getDashboardMetrics()
+        setMetrics(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch metrics')
+        console.error('Error fetching dashboard metrics:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchMetrics()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="metric-card animate-pulse">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-20"></div>
+              </div>
+              <div className="bg-gray-200 p-3 rounded-lg w-12 h-12"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (error || !metrics) {
+    return (
+      <div className="metric-card">
+        <div className="text-center py-8">
+          <p className="text-red-600 mb-4">Failed to load metrics</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="btn-primary"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const metricsData = [
+    {
+      name: 'Total Users',
+      value: metrics.totalUsers.toLocaleString(),
+      change: `+${metrics.userGrowth}%`,
+      changeType: 'positive',
+      icon: Users,
+    },
+    {
+      name: 'Training Completed',
+      value: `${metrics.trainingCompleted}%`,
+      change: `+${metrics.trainingGrowth}%`,
+      changeType: 'positive',
+      icon: Shield,
+    },
+    {
+      name: 'Simulations Run',
+      value: metrics.simulationsRun.toString(),
+      change: `+${metrics.simulationGrowth}`,
+      changeType: 'positive',
+      icon: Target,
+    },
+    {
+      name: 'Risk Score',
+      value: metrics.riskScore,
+      change: `-${metrics.riskImprovement}%`,
+      changeType: 'positive',
+      icon: TrendingUp,
+    },
+  ]
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {metrics.map((metric) => {
+      {metricsData.map((metric) => {
         const Icon = metric.icon
         return (
           <div key={metric.name} className="metric-card group">

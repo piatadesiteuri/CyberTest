@@ -1,8 +1,8 @@
-import { DatabaseConnection } from '../utils/DatabaseConnection';
-import { Course, CreateCourseData, UpdateCourseData, CourseLevel } from '../entities/Course';
+import DatabaseConnection from '../utils/DatabaseConnection';
+import { Course, CreateCourseData, UpdateCourseData, CourseLevel, CourseStatus } from '../entities/Course';
 import { Module, CreateModuleData, UpdateModuleData } from '../entities/Module';
 import { Lesson, CreateLessonData, UpdateLessonData, LessonType } from '../entities/Lesson';
-import { Quiz, CreateQuizData, UpdateQuizData, QuizType } from '../entities/Quiz';
+import { Quiz, CreateQuizData, UpdateQuizData, QuizType, QuizStatus } from '../entities/Quiz';
 import { Question, CreateQuestionData, UpdateQuestionData, QuestionType } from '../entities/Question';
 import { UserProgress, CreateUserProgressData, UpdateUserProgressData, ProgressStatus, QuizAttempt, CreateQuizAttemptData } from '../entities/UserProgress';
 
@@ -10,7 +10,7 @@ export class LearningService {
   private db: DatabaseConnection;
 
   constructor() {
-    this.db = new DatabaseConnection();
+    this.db = DatabaseConnection.getInstance();
   }
 
   // Course Management
@@ -19,7 +19,8 @@ export class LearningService {
     const course: Course = {
       id,
       ...courseData,
-      status: 'draft',
+      prerequisites: courseData.prerequisites || [],
+      status: CourseStatus.DRAFT,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -157,7 +158,9 @@ export class LearningService {
     const quiz: Quiz = {
       id,
       ...quizData,
-      status: 'draft',
+      timeLimit: quizData.timeLimit || 0,
+      maxAttempts: quizData.maxAttempts || 0,
+      status: QuizStatus.DRAFT,
       questions: [],
       isActive: true,
       createdAt: new Date(),
@@ -208,6 +211,7 @@ export class LearningService {
     const question: Question = {
       id,
       ...questionData,
+      answers: questionData.answers.map(answer => ({ ...answer, id: this.generateId() })),
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -345,11 +349,11 @@ export class LearningService {
 
       let isCorrect = false;
       if (question.type === QuestionType.MULTIPLE_CHOICE || question.type === QuestionType.SINGLE_CHOICE) {
-        const correctAnswerIds = question.answers.filter(a => a.isCorrect).map(a => a.id);
+        const correctAnswerIds = question.answers.filter((a: any) => a.isCorrect).map((a: any) => a.id);
         isCorrect = answer.answerIds.length === correctAnswerIds.length && 
-                   answer.answerIds.every(id => correctAnswerIds.includes(id));
+                   answer.answerIds.every((id: any) => correctAnswerIds.includes(id));
       } else if (question.type === QuestionType.TRUE_FALSE) {
-        const correctAnswer = question.answers.find(a => a.isCorrect);
+        const correctAnswer = question.answers.find((a: any) => a.isCorrect);
         isCorrect = correctAnswer && answer.answerIds.includes(correctAnswer.id);
       }
 

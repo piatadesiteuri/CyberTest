@@ -1,68 +1,8 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Users, UserPlus, Shield, AlertTriangle, CheckCircle } from 'lucide-react'
-
-const userGroups = [
-  {
-    id: 1,
-    name: 'All Users',
-    count: 1247,
-    riskLevel: 'Medium',
-    lastTraining: '2024-01-10',
-    status: 'active',
-  },
-  {
-    id: 2,
-    name: 'High-Risk Groups',
-    count: 89,
-    riskLevel: 'High',
-    lastTraining: '2024-01-08',
-    status: 'active',
-  },
-  {
-    id: 3,
-    name: 'IT Staff',
-    count: 45,
-    riskLevel: 'Low',
-    lastTraining: '2024-01-12',
-    status: 'active',
-  },
-  {
-    id: 4,
-    name: 'Finance Department',
-    count: 23,
-    riskLevel: 'High',
-    lastTraining: '2024-01-05',
-    status: 'pending',
-  },
-]
-
-const recentEnrollments = [
-  {
-    id: 1,
-    name: 'Maria Popescu',
-    department: 'HR',
-    role: 'Employee',
-    enrolledAt: '2024-01-15',
-    status: 'completed',
-  },
-  {
-    id: 2,
-    name: 'Alexandru Ionescu',
-    department: 'IT',
-    role: 'System Admin',
-    enrolledAt: '2024-01-14',
-    status: 'in_progress',
-  },
-  {
-    id: 3,
-    name: 'Ana Dumitrescu',
-    department: 'Finance',
-    role: 'Manager',
-    enrolledAt: '2024-01-13',
-    status: 'completed',
-  },
-]
+import { adminService, UserGroup, RecentEnrollment } from '@/services/adminService'
 
 const getRiskBadge = (riskLevel: string) => {
   const baseClasses = "px-2 py-1 text-xs font-medium rounded-full"
@@ -92,13 +32,91 @@ const getStatusIcon = (status: string) => {
 }
 
 export default function UserManagement() {
+  const [userGroups, setUserGroups] = useState<UserGroup[]>([])
+  const [recentEnrollments, setRecentEnrollments] = useState<RecentEnrollment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const [groupsData, enrollmentsData] = await Promise.all([
+          adminService.getUserGroups(),
+          adminService.getRecentEnrollments()
+        ])
+        setUserGroups(groupsData)
+        setRecentEnrollments(enrollmentsData)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch user data')
+        console.error('Error fetching user management data:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  const handleAddGroup = async () => {
+    try {
+      const newGroup = await adminService.createUserGroup({
+        name: 'New Group',
+        count: 0,
+        riskLevel: 'Medium',
+        lastTraining: 'Never',
+        status: 'active'
+      })
+      setUserGroups([...userGroups, newGroup])
+    } catch (err) {
+      console.error('Error creating user group:', err)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="card">
+          <div className="animate-pulse">
+            <div className="h-6 bg-gray-200 rounded w-48 mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="border border-gray-200 rounded-lg p-4">
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="card">
+        <div className="text-center py-8">
+          <p className="text-red-600 mb-4">Failed to load user data</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="btn-primary"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* User Groups Overview */}
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-harmony-dark">User Groups</h2>
-          <button className="btn-primary">
+          <button className="btn-primary" onClick={handleAddGroup}>
             <UserPlus className="h-4 w-4 mr-2" />
             Add Group
           </button>

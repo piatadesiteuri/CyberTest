@@ -44,9 +44,6 @@ export default function Header() {
             <Link href="/auth" className="btn-secondary">
               Sign In
             </Link>
-            <Link href="/dashboard" className="btn-primary">
-              Access Dashboard
-            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -75,9 +72,6 @@ export default function Header() {
               <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
                 <Link href="/auth" className="btn-secondary w-full text-center">
                   Sign In
-                </Link>
-                <Link href="/dashboard" className="btn-primary w-full text-center">
-                  Access Dashboard
                 </Link>
               </div>
             </nav>

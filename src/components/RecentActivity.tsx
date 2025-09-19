@@ -1,49 +1,8 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Activity, User, Clock, CheckCircle, AlertCircle } from 'lucide-react'
-
-const activities = [
-  {
-    id: 1,
-    type: 'training',
-    user: 'John Smith',
-    action: 'completed Phishing Awareness training',
-    time: '5 minutes ago',
-    status: 'success',
-  },
-  {
-    id: 2,
-    type: 'simulation',
-    user: 'Sarah Johnson',
-    action: 'clicked on phishing link in simulation',
-    time: '12 minutes ago',
-    status: 'warning',
-  },
-  {
-    id: 3,
-    type: 'login',
-    user: 'Mike Wilson',
-    action: 'logged in from new device',
-    time: '25 minutes ago',
-    status: 'info',
-  },
-  {
-    id: 4,
-    type: 'training',
-    user: 'Emily Davis',
-    action: 'started Password Security training',
-    time: '1 hour ago',
-    status: 'info',
-  },
-  {
-    id: 5,
-    type: 'alert',
-    user: 'System',
-    action: 'security policy updated',
-    time: '2 hours ago',
-    status: 'info',
-  },
-]
+import { adminService, ActivityLog } from '@/services/adminService'
 
 const getActivityIcon = (type: string, status: string) => {
   const iconClass = "h-4 w-4"
@@ -58,6 +17,70 @@ const getActivityIcon = (type: string, status: string) => {
 }
 
 export default function RecentActivity() {
+  const [activities, setActivities] = useState<ActivityLog[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchRecentActivity = async () => {
+      try {
+        setLoading(true)
+        const data = await adminService.getRecentActivity()
+        setActivities(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch recent activity')
+        console.error('Error fetching recent activity:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRecentActivity()
+    
+    // Set up polling for live updates (every 30 seconds)
+    const interval = setInterval(fetchRecentActivity, 30000)
+    
+    return () => clearInterval(interval)
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="card">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-48 mb-6"></div>
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-start space-x-3 p-3 rounded-lg">
+                <div className="h-4 w-4 bg-gray-200 rounded"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-20"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="card">
+        <div className="text-center py-8">
+          <p className="text-red-600 mb-4">Failed to load recent activity</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="btn-primary"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-6">

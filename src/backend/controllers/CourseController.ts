@@ -1,15 +1,17 @@
 import { Request, Response } from 'express';
 import mysql from 'mysql2/promise';
-import { databaseConfig } from '../../config/database';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export class CourseController {
   private async getConnection() {
     return await mysql.createConnection({
-      host: databaseConfig.host,
-      port: databaseConfig.port,
-      user: databaseConfig.user,
-      password: databaseConfig.password,
-      database: databaseConfig.database,
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '3306'),
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || 'ddd',
+      database: process.env.DB_NAME || 'cyber',
     });
   }
 

@@ -1,57 +1,8 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Target, Mail, Phone, AlertTriangle, Play, Pause, Settings } from 'lucide-react'
-
-const simulations = [
-  {
-    id: 1,
-    name: 'Phishing Campaign',
-    type: 'Email',
-    icon: Mail,
-    status: 'active',
-    participants: 1247,
-    clickRate: 12.5,
-    lastRun: '2024-01-15',
-    nextRun: '2024-01-22',
-    description: 'Automated phishing simulation targeting all users',
-  },
-  {
-    id: 2,
-    name: 'Smishing Campaign',
-    type: 'SMS',
-    icon: Phone,
-    status: 'active',
-    participants: 1247,
-    clickRate: 8.3,
-    lastRun: '2024-01-14',
-    nextRun: '2024-01-21',
-    description: 'SMS-based social engineering attack simulation',
-  },
-  {
-    id: 3,
-    name: 'Vishing Simulation',
-    type: 'Voice',
-    icon: Phone,
-    status: 'paused',
-    participants: 312,
-    clickRate: 15.2,
-    lastRun: '2024-01-10',
-    nextRun: '2024-01-24',
-    description: 'Voice-based social engineering for high-risk groups',
-  },
-  {
-    id: 4,
-    name: 'APT Simulation',
-    type: 'Advanced',
-    icon: AlertTriangle,
-    status: 'completed',
-    participants: 89,
-    clickRate: 3.1,
-    lastRun: '2024-01-08',
-    nextRun: '2024-02-08',
-    description: 'Advanced Persistent Threat simulation for IT staff',
-  },
-]
+import { adminService, SimulationData } from '@/services/adminService'
 
 const getStatusBadge = (status: string) => {
   const baseClasses = "px-2 py-1 text-xs font-medium rounded-full"
@@ -74,6 +25,117 @@ const getClickRateColor = (rate: number) => {
 }
 
 export default function SocialEngineeringSims() {
+  const [simulations, setSimulations] = useState<SimulationData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchSimulations = async () => {
+      try {
+        setLoading(true)
+        const data = await adminService.getSimulations()
+        setSimulations(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch simulations')
+        console.error('Error fetching simulations:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSimulations()
+  }, [])
+
+  const handleStartSimulation = async (simulationId: string) => {
+    try {
+      await adminService.startSimulation(simulationId)
+      setSimulations(simulations.map(sim => 
+        sim.id === simulationId ? { ...sim, status: 'active' } : sim
+      ))
+    } catch (err) {
+      console.error('Error starting simulation:', err)
+    }
+  }
+
+  const handlePauseSimulation = async (simulationId: string) => {
+    try {
+      await adminService.pauseSimulation(simulationId)
+      setSimulations(simulations.map(sim => 
+        sim.id === simulationId ? { ...sim, status: 'paused' } : sim
+      ))
+    } catch (err) {
+      console.error('Error pausing simulation:', err)
+    }
+  }
+
+  const handleConfigureSimulation = async (simulationId: string) => {
+    try {
+      // In a real app, this would open a configuration modal
+      await adminService.configureSimulation(simulationId, {})
+      console.log('Simulation configuration updated')
+    } catch (err) {
+      console.error('Error configuring simulation:', err)
+    }
+  }
+
+  const getSimulationIcon = (type: string) => {
+    switch (type) {
+      case 'Email':
+        return Mail
+      case 'SMS':
+        return Phone
+      case 'Voice':
+        return Phone
+      case 'Advanced':
+        return AlertTriangle
+      default:
+        return Target
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="card">
+          <div className="animate-pulse">
+            <div className="h-6 bg-gray-200 rounded w-64 mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="border border-gray-200 rounded-lg p-6">
+                  <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-3 bg-gray-200 rounded mb-4"></div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-10 bg-gray-200 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="card">
+        <div className="text-center py-8">
+          <p className="text-red-600 mb-4">Failed to load simulations</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="btn-primary"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Simulations Overview */}
@@ -94,7 +156,7 @@ export default function SocialEngineeringSims() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {simulations.map((sim) => {
-            const Icon = sim.icon
+            const Icon = getSimulationIcon(sim.type)
             return (
               <div key={sim.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-4">
@@ -134,17 +196,26 @@ export default function SocialEngineeringSims() {
                 
                 <div className="flex space-x-2">
                   {sim.status === 'active' ? (
-                    <button className="flex-1 btn-secondary">
+                    <button 
+                      className="flex-1 btn-secondary"
+                      onClick={() => handlePauseSimulation(sim.id)}
+                    >
                       <Pause className="h-4 w-4 mr-2" />
                       Pause
                     </button>
                   ) : (
-                    <button className="flex-1 btn-primary">
+                    <button 
+                      className="flex-1 btn-primary"
+                      onClick={() => handleStartSimulation(sim.id)}
+                    >
                       <Play className="h-4 w-4 mr-2" />
                       Start
                     </button>
                   )}
-                  <button className="btn-secondary">
+                  <button 
+                    className="btn-secondary"
+                    onClick={() => handleConfigureSimulation(sim.id)}
+                  >
                     <Settings className="h-4 w-4" />
                   </button>
                 </div>
