@@ -16,16 +16,72 @@ export class CourseController {
   }
 
   private parseJsonField(field: any): any[] {
-    if (!field) return [];
+    console.log('🔍 parseJsonField input:', field, 'type:', typeof field);
+    if (!field) {
+      console.log('❌ Field is empty, returning empty array');
+      return [];
+    }
+    
+    // Handle already parsed objects from MySQL2
+    if (typeof field === 'object' && field !== null) {
+      console.log('📦 Field is already an object');
+      // If it's an object with options and correct, convert to array format
+      if (field.options && Array.isArray(field.options)) {
+        const convertedAnswers = field.options.map((option: string, index: number) => ({
+          text: option,
+          isCorrect: index === field.correct
+        }));
+        console.log('🔄 Converted to answer format:', convertedAnswers);
+        return convertedAnswers;
+      }
+      // Handle True/False questions with only correct boolean
+      if (typeof field.correct === 'boolean' && !field.options) {
+        const convertedAnswers = [
+          { text: 'True', isCorrect: field.correct === true },
+          { text: 'False', isCorrect: field.correct === false }
+        ];
+        console.log('🔄 Converted True/False to answer format:', convertedAnswers);
+        return convertedAnswers;
+      }
+      // Handle fill_in_blank questions with string correct answer
+      if (typeof field.correct === 'string' && !field.options) {
+        const convertedAnswers = [
+          { text: field.correct, isCorrect: true }
+        ];
+        console.log('🔄 Converted fill_in_blank to answer format:', convertedAnswers);
+        return convertedAnswers;
+      }
+      // If it's already an array, return it
+      if (Array.isArray(field)) {
+        console.log('📦 Field is already an array');
+        return field;
+      }
+    }
+    
+    // Handle string JSON
     if (typeof field === 'string') {
       try {
-        return JSON.parse(field);
+        const parsed = JSON.parse(field);
+        console.log('✅ Parsed JSON:', parsed);
+        // If it's an object with options and correct, convert to array format
+        if (parsed && typeof parsed === 'object' && parsed.options && Array.isArray(parsed.options)) {
+          const convertedAnswers = parsed.options.map((option: string, index: number) => ({
+            text: option,
+            isCorrect: index === parsed.correct
+          }));
+          console.log('🔄 Converted to answer format:', convertedAnswers);
+          return convertedAnswers;
+        }
+        return parsed;
       } catch (e) {
+        console.log('❌ JSON parse error:', e);
         // If it's not valid JSON, treat as plain text and split by commas
         return field.split(',').map((item: string) => item.trim()).filter((item: string) => item);
       }
     }
-    return Array.isArray(field) ? field : [];
+    
+    console.log('📦 Field is not string or object, returning empty array');
+    return [];
   }
 
   async getCourses(req: Request, res: Response): Promise<void> {
@@ -165,50 +221,61 @@ export class CourseController {
         }
 
         if (quizzes.length > 0) {
-          const quiz = quizzes[0];
+          // Process all quizzes for this module
+          const moduleQuizzes = [];
           
-          // Get questions for quiz
-          const [questions] = await connection.query(`
-            SELECT 
-              id, quiz_id, text, type, answers, explanation, points, 
-              \`order\`, is_active, created_at, updated_at
-            FROM questions 
-            WHERE quiz_id = ? AND is_active = true
-            ORDER BY \`order\` ASC
-          `, [quiz.id]) as [any[], any];
+          for (const quiz of quizzes) {
+            // Get questions for each quiz
+            const [questions] = await connection.query(`
+              SELECT 
+                id, quiz_id, text, type, answers, explanation, points, 
+                \`order\`, is_active, created_at, updated_at
+              FROM questions 
+              WHERE quiz_id = ? AND is_active = true
+              ORDER BY \`order\` ASC
+            `, [quiz.id]) as [any[], any];
 
-          console.log(`❓ Questions for quiz ${quiz.id}:`, questions.length);
-          if (questions.length > 0) {
-            console.log(`📝 First question: "${questions[0].text.substring(0, 50)}..."`);
+            console.log(`❓ Questions for quiz ${quiz.id} (${quiz.title}):`, questions.length);
+            if (questions.length > 0) {
+              console.log(`📝 First question: "${questions[0].text.substring(0, 50)}..."`);
+            }
+
+            const processedQuiz = {
+              id: quiz.id,
+              moduleId: quiz.module_id,
+              title: quiz.title,
+              description: quiz.description,
+              type: quiz.type,
+              status: quiz.status,
+              timeLimit: quiz.time_limit,
+              passingScore: quiz.passing_score,
+              maxAttempts: quiz.max_attempts,
+              isActive: quiz.is_active,
+              createdAt: quiz.created_at,
+              updatedAt: quiz.updated_at,
+              questions: questions.map((question: any) => ({
+                id: question.id,
+                quizId: question.quiz_id,
+                text: question.text,
+                type: question.type,
+                answers: this.parseJsonField(question.answers),
+                explanation: question.explanation,
+                points: question.points,
+                order: question.order,
+                isActive: question.is_active,
+                createdAt: question.created_at,
+                updatedAt: question.updated_at
+              }))
+            };
+            
+            moduleQuizzes.push(processedQuiz);
           }
-
-          module.quiz = {
-            id: quiz.id,
-            moduleId: quiz.module_id,
-            title: quiz.title,
-            description: quiz.description,
-            type: quiz.type,
-            status: quiz.status,
-            timeLimit: quiz.time_limit,
-            passingScore: quiz.passing_score,
-            maxAttempts: quiz.max_attempts,
-            isActive: quiz.is_active,
-            createdAt: quiz.created_at,
-            updatedAt: quiz.updated_at,
-            questions: questions.map((question: any) => ({
-              id: question.id,
-              quizId: question.quiz_id,
-              text: question.text,
-              type: question.type,
-              answers: this.parseJsonField(question.answers),
-              explanation: question.explanation,
-              points: question.points,
-              order: question.order,
-              isActive: question.is_active,
-              createdAt: question.created_at,
-              updatedAt: question.updated_at
-            }))
-          };
+          
+          // Set the first quiz as the main quiz for backward compatibility
+          module.quiz = moduleQuizzes[0];
+          
+          // Add all quizzes to the module
+          module.quizzes = moduleQuizzes;
         }
       }
 

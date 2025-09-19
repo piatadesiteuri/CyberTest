@@ -107,16 +107,59 @@ export default function QuizPage() {
           // Find the quiz in the course modules
           let foundQuiz = null;
           for (const module of data.course.modules) {
+            // Check single quiz
             if (module.quiz && module.quiz.id === quizId) {
               foundQuiz = module.quiz;
               break;
+            }
+            // Check multiple quizzes
+            if (module.quizzes && module.quizzes.length > 0) {
+              const quiz = module.quizzes.find((q: any) => q.id === quizId);
+              if (quiz) {
+                foundQuiz = quiz;
+                break;
+              }
             }
           }
           
           if (foundQuiz) {
             console.log('✅ Quiz found:', foundQuiz.title);
             console.log('❓ Questions count:', foundQuiz.questions.length);
-            setQuiz(foundQuiz);
+            
+            // Process questions to convert database format to UI format
+            const processedQuiz = {
+              ...foundQuiz,
+              questions: foundQuiz.questions.map((question: any) => {
+                let processedAnswers = [];
+                
+                if (question.answers && typeof question.answers === 'string') {
+                  try {
+                    const answersData = JSON.parse(question.answers);
+                    if (answersData.options && Array.isArray(answersData.options)) {
+                      // Convert from {options: [...], correct: number} to [{text: "...", isCorrect: boolean}]
+                      processedAnswers = answersData.options.map((option: string, index: number) => ({
+                        text: option,
+                        isCorrect: index === answersData.correct
+                      }));
+                    }
+                  } catch (e) {
+                    console.error('Error parsing answers:', e);
+                    processedAnswers = [];
+                  }
+                } else if (question.answers && Array.isArray(question.answers)) {
+                  // Already in correct format
+                  processedAnswers = question.answers;
+                }
+                
+                return {
+                  ...question,
+                  answers: processedAnswers
+                };
+              })
+            };
+            
+            console.log('🔄 Processed quiz questions:', processedQuiz.questions[0]);
+            setQuiz(processedQuiz);
             setTimeLeft((foundQuiz.timeLimit || 15) * 60); // Convert minutes to seconds
           } else {
             console.log('❌ Quiz not found in course modules');
@@ -561,6 +604,20 @@ export default function QuizPage() {
                 {Math.round(((currentQuestionIndex + 1) / quiz.questions.length) * 100)}% Complete
               </div>
             </div>
+            {/* Question Image */}
+            {currentQuestion.imageUrl && (
+              <div className="mb-6">
+                <img 
+                  src={currentQuestion.imageUrl} 
+                  alt="Question illustration" 
+                  className="w-full max-w-2xl mx-auto rounded-lg shadow-lg border border-gray-200"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+
             <div className="prose prose-lg max-w-none text-gray-900" 
                  dangerouslySetInnerHTML={{ 
                    __html: currentQuestion.text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-warm-copper">$1</strong>')
@@ -569,66 +626,90 @@ export default function QuizPage() {
             />
           </div>
 
-          <div className="space-y-3">
-            {currentQuestion.answers.map((answer, index) => {
-              const isSelected = currentQuestion.type === 'multiple_choice'
-                ? Array.isArray(answers[currentQuestion.id]) && answers[currentQuestion.id].includes(answer.text)
-                : answers[currentQuestion.id] === answer.text
-              
-              return (
-                <label
-                  key={index}
-                  className={`block p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
-                    isSelected
-                      ? 'border-warm-copper bg-gradient-to-r from-warm-copper/5 to-warm-bronze/5 shadow-md' 
-                      : 'border-gray-200 hover:border-warm-copper/50 hover:bg-warm-copper/5 hover:shadow-sm'
-                  }`}
-                >
-                  <div className="flex items-start">
-                    <div className={`w-6 h-6 rounded-full border-2 mr-4 mt-0.5 flex items-center justify-center transition-colors ${
+          {/* Fill in the blank question */}
+          {currentQuestion.type === 'fill_in_blank' ? (
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Your Answer:
+                </label>
+                <input
+                  type="text"
+                  value={answers[currentQuestion.id] || ''}
+                  onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
+                  placeholder="Enter your answer here..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warm-copper focus:border-warm-copper transition-colors"
+                />
+              </div>
+              {currentQuestion.terminalCommand && (
+                <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-sm">
+                  <div className="text-gray-400 mb-2">Terminal Command:</div>
+                  <div className="text-green-400">{currentQuestion.terminalCommand}</div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {currentQuestion.answers.map((answer, index) => {
+                const isSelected = currentQuestion.type === 'multiple_choice'
+                  ? Array.isArray(answers[currentQuestion.id]) && answers[currentQuestion.id].includes(answer.text)
+                  : answers[currentQuestion.id] === answer.text
+                
+                return (
+                  <label
+                    key={index}
+                    className={`block p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
                       isSelected
-                        ? 'border-warm-copper bg-warm-copper' 
-                        : 'border-gray-300'
-                    }`}>
-                      {isSelected && (
-                        <div className="w-3 h-3 bg-white rounded-full"></div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-500">
-                          {String.fromCharCode(65 + index)}.
-                        </span>
+                        ? 'border-warm-copper bg-gradient-to-r from-warm-copper/5 to-warm-bronze/5 shadow-md' 
+                        : 'border-gray-200 hover:border-warm-copper/50 hover:bg-warm-copper/5 hover:shadow-sm'
+                    }`}
+                  >
+                    <div className="flex items-start">
+                      <div className={`w-6 h-6 rounded-full border-2 mr-4 mt-0.5 flex items-center justify-center transition-colors ${
+                        isSelected
+                          ? 'border-warm-copper bg-warm-copper' 
+                          : 'border-gray-300'
+                      }`}>
                         {isSelected && (
-                          <div className="w-2 h-2 bg-warm-copper rounded-full"></div>
+                          <div className="w-3 h-3 bg-white rounded-full"></div>
                         )}
                       </div>
-                      <p className="text-gray-800 mt-1 leading-relaxed">{answer.text}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-500">
+                            {String.fromCharCode(65 + index)}.
+                          </span>
+                          {isSelected && (
+                            <div className="w-2 h-2 bg-warm-copper rounded-full"></div>
+                          )}
+                        </div>
+                        <p className="text-gray-800 mt-1 leading-relaxed">{answer.text}</p>
+                      </div>
                     </div>
-                  </div>
-                  <input
-                    type={currentQuestion.type === 'multiple_choice' ? 'checkbox' : 'radio'}
-                    name={`question-${currentQuestion.id}`}
-                    value={answer.text}
-                    checked={isSelected}
-                    onChange={(e) => {
-                      if (currentQuestion.type === 'multiple_choice') {
-                        const currentAnswers = Array.isArray(answers[currentQuestion.id]) ? answers[currentQuestion.id] as string[] : []
-                        if (e.target.checked) {
-                          handleAnswerChange(currentQuestion.id, [...currentAnswers, answer.text])
+                    <input
+                      type={currentQuestion.type === 'multiple_choice' ? 'checkbox' : 'radio'}
+                      name={`question-${currentQuestion.id}`}
+                      value={answer.text}
+                      checked={isSelected}
+                      onChange={(e) => {
+                        if (currentQuestion.type === 'multiple_choice') {
+                          const currentAnswers = Array.isArray(answers[currentQuestion.id]) ? answers[currentQuestion.id] as string[] : []
+                          if (e.target.checked) {
+                            handleAnswerChange(currentQuestion.id, [...currentAnswers, answer.text])
+                          } else {
+                            handleAnswerChange(currentQuestion.id, currentAnswers.filter((a: string) => a !== answer.text))
+                          }
                         } else {
-                          handleAnswerChange(currentQuestion.id, currentAnswers.filter((a: string) => a !== answer.text))
+                          handleAnswerChange(currentQuestion.id, answer.text)
                         }
-                      } else {
-                        handleAnswerChange(currentQuestion.id, answer.text)
-                      }
-                    }}
-                    className="sr-only"
-                  />
-                </label>
-              )
-            })}
-          </div>
+                      }}
+                      className="sr-only"
+                    />
+                  </label>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Navigation */}
