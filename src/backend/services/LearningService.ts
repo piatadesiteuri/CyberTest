@@ -71,7 +71,19 @@ export class LearningService {
     const query = 'SELECT * FROM courses WHERE status = "published" AND is_active = TRUE ORDER BY level, created_at DESC';
     const [results] = await this.db.getPool().execute(query) as [any[], any];
     
-    return results.map(this.mapCourseFromDb);
+    console.log('Raw database results:', results);
+    
+    return results.map((row) => {
+      console.log('Processing row:', row);
+      try {
+        const mappedCourse = this.mapCourseFromDb(row);
+        console.log('Mapped course:', mappedCourse);
+        return mappedCourse;
+      } catch (error) {
+        console.error('Error mapping course:', error);
+        throw error;
+      }
+    });
   }
 
   // Module Management
@@ -203,6 +215,13 @@ export class LearningService {
     quiz.questions = questions;
     
     return quiz;
+  }
+
+  async getQuizzesByModuleId(moduleId: string): Promise<Quiz[]> {
+    const query = 'SELECT * FROM quizzes WHERE module_id = ? AND is_active = TRUE ORDER BY created_at ASC';
+    const [results] = await this.db.getPool().execute(query, [moduleId]) as [any[], any];
+    
+    return results.map((row: any) => this.mapQuizFromDb(row));
   }
 
   // Question Management
@@ -445,6 +464,21 @@ export class LearningService {
   }
 
   private mapCourseFromDb(row: any): Course {
+    const safeParseJSON = (jsonString: any, fallback: any[] = []) => {
+      try {
+        if (jsonString === null || jsonString === undefined || jsonString === '') return fallback;
+        if (typeof jsonString === 'string') {
+          if (jsonString.trim() === '') return fallback;
+          return JSON.parse(jsonString);
+        }
+        if (Array.isArray(jsonString)) return jsonString;
+        return fallback;
+      } catch (error) {
+        console.warn('Failed to parse JSON:', jsonString, error);
+        return fallback;
+      }
+    };
+
     return {
       id: row.id,
       title: row.title,
@@ -452,9 +486,9 @@ export class LearningService {
       level: row.level,
       status: row.status,
       estimatedDuration: row.estimated_duration,
-      prerequisites: JSON.parse(row.prerequisites || '[]'),
-      learningObjectives: JSON.parse(row.learning_objectives || '[]'),
-      tags: JSON.parse(row.tags || '[]'),
+      prerequisites: safeParseJSON(row.prerequisites, []),
+      learningObjectives: safeParseJSON(row.learning_objectives, []),
+      tags: safeParseJSON(row.tags, []),
       isActive: row.is_active,
       createdBy: row.created_by,
       createdAt: row.created_at,
