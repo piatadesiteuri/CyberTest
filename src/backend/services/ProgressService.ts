@@ -194,13 +194,13 @@ export class ProgressService {
     const completedLessons = (userProgressRows as {completedLessons: number}[])[0]?.completedLessons || 0;
     const lastActivity = (userProgressRows as {lastActivity: Date}[])[0]?.lastActivity || null;
 
-    // Calculate completed modules - a module is completed only when ALL lessons and quizzes are completed
+    // Calculate completed modules - a module is completed when ALL lessons are completed AND at least one quiz is completed with score >= 75%
     const [completedModulesRows] = await db.execute(
       `SELECT m.id as module_id,
          COUNT(DISTINCT l.id) as total_lessons,
          COUNT(DISTINCT q.id) as total_quizzes,
          COUNT(DISTINCT CASE WHEN up_lessons.status = 'completed' THEN up_lessons.lesson_id END) as completed_lessons,
-         COUNT(DISTINCT CASE WHEN qa.completed_at IS NOT NULL THEN qa.quiz_id END) as completed_quizzes
+         COUNT(DISTINCT CASE WHEN qa.completed_at IS NOT NULL AND qa.score >= 75 THEN qa.quiz_id END) as completed_quizzes_with_good_score
        FROM modules m
        LEFT JOIN lessons l ON m.id = l.module_id
        LEFT JOIN quizzes q ON m.id = q.module_id
@@ -208,7 +208,7 @@ export class ProgressService {
        LEFT JOIN quiz_attempts qa ON qa.quiz_id = q.id AND qa.user_id = ?
        WHERE m.course_id = ?
        GROUP BY m.id
-       HAVING completed_lessons = total_lessons AND completed_quizzes = total_quizzes`,
+       HAVING completed_lessons = total_lessons AND completed_quizzes_with_good_score > 0`,
       [userId, courseId, userId, courseId]
     );
 
