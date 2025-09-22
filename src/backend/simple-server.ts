@@ -75,10 +75,41 @@ app.use(cors({
   preflightContinue: false
 }));
 
+// DEBUG: Log toate request-urile
+app.use((req: Request, res: Response, next: NextFunction) => {
+  console.log('🔍 REQUEST:', {
+    method: req.method,
+    url: req.url,
+    origin: req.headers.origin,
+    userAgent: req.headers['user-agent'],
+    contentType: req.headers['content-type'],
+    authorization: req.headers.authorization ? 'Present' : 'Missing',
+    body: req.method === 'POST' ? req.body : 'N/A',
+    timestamp: new Date().toISOString()
+  });
+  next();
+});
+
 app.use(express.json());
+
+// DEBUG: Log specific OPTIONS requests for CORS
+app.options('*', (req: Request, res: Response) => {
+  console.log('🌐 OPTIONS (CORS PREFLIGHT):', {
+    url: req.url,
+    origin: req.headers.origin,
+    method: req.headers['access-control-request-method'],
+    headers: req.headers['access-control-request-headers'],
+    timestamp: new Date().toISOString()
+  });
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+  res.send(200);
+});
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
+  console.log('💚 HEALTH CHECK accessed');
   res.json({
     success: true,
     message: 'Backend server is running',
@@ -175,7 +206,15 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
 // Login endpoint with database verification
 app.post('/api/auth/login', async (req: Request, res: Response) => {
   try {
-    console.log('Login request received:', req.body);
+    console.log('🔐 LOGIN REQUEST received:', {
+      body: req.body,
+      headers: {
+        origin: req.headers.origin,
+        contentType: req.headers['content-type'],
+        userAgent: req.headers['user-agent']
+      },
+      timestamp: new Date().toISOString()
+    });
     
     if (!db) {
       return res.status(500).json({
@@ -247,6 +286,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
       { expiresIn: JWT_REFRESH_EXPIRES_IN as any }
     );
 
+    console.log('✅ LOGIN SUCCESS for user:', user.email);
     return res.status(200).json({
       success: true,
       message: 'Login successful',
@@ -266,7 +306,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('❌ LOGIN ERROR:', error);
     return res.status(500).json({
       success: false,
       message: 'Login failed'
