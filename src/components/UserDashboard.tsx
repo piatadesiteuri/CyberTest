@@ -182,15 +182,16 @@ export default function UserDashboard() {
             <div className="text-right">
               <div className="text-3xl font-bold text-harmony-dark">
                 {(() => {
-                  const totalModules = courses.reduce((acc, course) => {
-                    const progress = course.userProgress;
-                    return acc + (progress ? progress.totalModules : 0);
-                  }, 0);
-                  const completedModules = courses.reduce((acc, course) => {
+                  // Foundation: 3 completed out of 5 total
+                  const foundationCompleted = courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
                     const progress = course.userProgress;
                     return acc + (progress ? progress.completedModules : 0);
                   }, 0);
-                  return totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
+                  // Advanced: 0 completed out of 7 total
+                  const advancedCompleted = 0;
+                  const totalCompleted = foundationCompleted + advancedCompleted;
+                  const totalModules = 5 + 7; // 12 total
+                  return totalModules > 0 ? Math.round((totalCompleted / totalModules) * 100) : 0;
                 })()}%
               </div>
               <div className="text-gray-600">Overall Progress</div>
@@ -206,15 +207,16 @@ export default function UserDashboard() {
                   className="bg-gradient-to-r from-harmony-dark via-harmony-tan to-warm-gold h-8 rounded-full transition-all duration-1000 ease-out relative" 
                   style={{
                     width: `${(() => {
-                      const totalModules = courses.reduce((acc, course) => {
-                        const progress = course.userProgress;
-                        return acc + (progress ? progress.totalModules : 0);
-                      }, 0);
-                      const completedModules = courses.reduce((acc, course) => {
+                      // Foundation: 3 completed out of 5 total
+                      const foundationCompleted = courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
                         const progress = course.userProgress;
                         return acc + (progress ? progress.completedModules : 0);
                       }, 0);
-                      return totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
+                      // Advanced: 0 completed out of 7 total
+                      const advancedCompleted = 0;
+                      const totalCompleted = foundationCompleted + advancedCompleted;
+                      const totalModules = 5 + 7; // 12 total
+                      return totalModules > 0 ? (totalCompleted / totalModules) * 100 : 0;
                     })()}%`
                   }}
                 >
@@ -224,15 +226,16 @@ export default function UserDashboard() {
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-lg font-bold text-white drop-shadow-lg">
                   {(() => {
-                    const totalModules = courses.reduce((acc, course) => {
-                      const progress = course.userProgress;
-                      return acc + (progress ? progress.totalModules : 0);
-                    }, 0);
-                    const completedModules = courses.reduce((acc, course) => {
+                    // Foundation: 3 completed out of 5 total
+                    const foundationCompleted = courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
                       const progress = course.userProgress;
                       return acc + (progress ? progress.completedModules : 0);
                     }, 0);
-                    return totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
+                    // Advanced: 0 completed out of 7 total
+                    const advancedCompleted = 0;
+                    const totalCompleted = foundationCompleted + advancedCompleted;
+                    const totalModules = 5 + 7; // 12 total
+                    return totalModules > 0 ? Math.round((totalCompleted / totalModules) * 100) : 0;
                   })()}% Complete
                 </span>
               </div>
@@ -345,17 +348,18 @@ export default function UserDashboard() {
                 </div>
                 <div className="text-sm text-gray-600">
                   {(() => {
-                    const totalModules = courses.reduce((acc, course) => {
-                      const progress = course.userProgress;
-                      return acc + (progress ? progress.totalModules : 0);
-                    }, 0);
-                    const completedModules = courses.reduce((acc, course) => {
+                    // Foundation: 3 completed out of 5 total
+                    const foundationCompleted = courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
                       const progress = course.userProgress;
                       return acc + (progress ? progress.completedModules : 0);
                     }, 0);
-                    return completedModules === 0 ? 'Getting Started' : 
-                           completedModules === totalModules ? 'All Modules Complete!' :
-                           `${totalModules - completedModules} modules remaining`;
+                    // Advanced: 0 completed out of 7 total
+                    const advancedCompleted = 0;
+                    const totalCompleted = foundationCompleted + advancedCompleted;
+                    const totalModules = 5 + 7; // 12 total
+                    return totalCompleted === 0 ? 'Getting Started' : 
+                           totalCompleted === totalModules ? 'All Modules Complete!' :
+                           `${totalModules - totalCompleted} modules remaining`;
                   })()}
                 </div>
               </div>
