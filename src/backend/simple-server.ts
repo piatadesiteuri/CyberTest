@@ -13,7 +13,12 @@ import { ProgressController } from './controllers/ProgressController';
 import { authenticateToken } from './middleware/AuthMiddleware';
 import { jwtConfig } from '../config/database';
 
-dotenv.config();
+// Load .env file only if it exists (for local development)
+try {
+  dotenv.config();
+} catch (error) {
+  console.log('No .env file found, using environment variables');
+}
 
 const app = express();
 const PORT = parseInt(process.env.PORT || process.env.RAILWAY_PORT || '3001', 10);
