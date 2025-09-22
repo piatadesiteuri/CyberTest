@@ -134,6 +134,16 @@ export default function UserDashboard() {
   }
 
   const getModuleProgress = (course: Course) => {
+    // For foundation course, use dashboardData if available
+    if (course.level === 'foundation' && dashboardData) {
+      return { 
+        completed: dashboardData.completedModules, 
+        total: dashboardData.totalModules, 
+        percentage: dashboardData.totalModules > 0 ? Math.round((dashboardData.completedModules / dashboardData.totalModules) * 100) : 0 
+      }
+    }
+    
+    // For other courses, use course.userProgress or default
     if (!course.userProgress) {
       return { completed: 0, total: course.modules?.length || 0, percentage: 0 }
     }
@@ -403,7 +413,7 @@ export default function UserDashboard() {
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-warm-gold">
-                    {dashboardData?.averageScore || 0}%
+                    {Math.round(dashboardData?.averageScore || 0)}%
                   </div>
                 </div>
               </div>
@@ -420,7 +430,7 @@ export default function UserDashboard() {
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-warm-brass">
-                    {dashboardData ? Math.round(dashboardData.totalTimeSpent / 60) : 0}m
+                    {dashboardData ? Math.round(dashboardData.totalTimeSpent) : 0}m
                   </div>
                 </div>
               </div>
