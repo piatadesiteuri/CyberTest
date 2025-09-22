@@ -372,6 +372,8 @@ function RichTextEditor({ value, onChange }: RichTextEditorProps) {
         className="min-h-[300px] p-4 bg-white/5 text-white prose prose-invert max-w-none focus:outline-none"
         style={{
           lineHeight: '1.6',
+          direction: 'ltr',
+          textAlign: 'left',
         }}
       />
 
