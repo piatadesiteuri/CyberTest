@@ -136,6 +136,15 @@ export default function UserDashboard() {
   const getModuleProgress = (course: Course) => {
     // Use course.userProgress for all courses (this comes from the backend with correct calculation)
     if (!course.userProgress) {
+      // For Advanced courses, we know the module counts from our database
+      if (course.level === 'advanced') {
+        if (course.title === 'Threat Analysis & Response') {
+          return { completed: 0, total: 3, percentage: 0 }
+        } else if (course.title === 'Security Leadership') {
+          return { completed: 0, total: 4, percentage: 0 }
+        }
+      }
+      // For Foundation courses, use the modules length if available
       return { completed: 0, total: course.modules?.length || 0, percentage: 0 }
     }
     
