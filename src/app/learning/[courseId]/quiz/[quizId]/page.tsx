@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { ArrowLeft, Clock, CheckCircle, RotateCcw, Target, AlertCircle, Lock } from 'lucide-react'
+import { progressService } from '@/services/progressService'
 
 interface Question {
   id: string
@@ -13,6 +14,8 @@ interface Question {
   explanation?: string
   points: number
   order: number
+  imageUrl?: string
+  terminalCommand?: string
 }
 
 interface Answer {
@@ -46,6 +49,7 @@ export default function QuizPage() {
   const { courseId, quizId } = useParams()
   const { user } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [quiz, setQuiz] = useState<Quiz | null>(null)
   const [loading, setLoading] = useState(true)
   const [unlockStatus, setUnlockStatus] = useState<{
@@ -63,8 +67,17 @@ export default function QuizPage() {
   const [attempts, setAttempts] = useState(0)
   const [retakeTimer, setRetakeTimer] = useState(0)
   const [canRetake, setCanRetake] = useState(true)
+  const [isReviewMode, setIsReviewMode] = useState(false)
+  const [previousAttempt, setPreviousAttempt] = useState<QuizAttempt | null>(null)
 
   useEffect(() => {
+    // Check if this is review mode
+    const mode = searchParams.get('mode');
+    const isReview = mode === 'review';
+    if (isReview) {
+      setIsReviewMode(true);
+    }
+
     // Check quiz unlock status first (only for authenticated users)
     const checkQuizUnlock = async () => {
       const token = localStorage.getItem('token');
@@ -91,6 +104,48 @@ export default function QuizPage() {
         }
       } catch (error) {
         console.error('Error checking quiz unlock status:', error);
+      }
+    };
+
+    // Load previous attempt if in review mode
+    const loadPreviousAttempt = async () => {
+      if (!isReview) return;
+      
+      try {
+        const token = localStorage.getItem('accessToken');
+        console.log('🔑 Token for review mode:', token ? 'Present' : 'Missing');
+        if (!token) return;
+        
+        const response = await fetch(`http://localhost:3001/api/progress/quiz-attempts`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        console.log('📡 Review mode response status:', response.status);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('📊 Review mode data:', data);
+          if (data.success && data.attempts) {
+            console.log('🔍 Looking for quiz ID:', quizId);
+            console.log('📝 Available attempts:', data.attempts.map((a: any) => ({ quizId: a.quizId, score: a.score })));
+            // Find the most recent attempt for this quiz
+            const quizAttempt = data.attempts.find((attempt: any) => attempt.quizId === quizId);
+            if (quizAttempt) {
+              console.log('✅ Found quiz attempt:', quizAttempt);
+              setPreviousAttempt(quizAttempt);
+              setAnswers(quizAttempt.answers || {});
+              setQuizResult(quizAttempt);
+              console.log('📋 Loaded previous attempt answers:', quizAttempt.answers);
+            } else {
+              console.log('❌ No quiz attempt found for quiz ID:', quizId);
+            }
+          }
+        } else {
+          console.error('❌ Review mode API error:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('Error loading previous attempt:', error);
       }
     };
 
@@ -182,7 +237,9 @@ export default function QuizPage() {
     };
 
     checkQuizUnlock().then(() => {
-      fetchQuiz();
+      loadPreviousAttempt().then(() => {
+        fetchQuiz();
+      });
     });
   }, [courseId, quizId]);
 
@@ -281,10 +338,9 @@ export default function QuizPage() {
     }
 
     try {
-      // TODO: Replace with actual API call
       console.log('Submitting quiz:', result)
       
-      // await learningService.createQuizAttempt(result)
+      await progressService.createQuizAttempt(result)
       
       setQuizResult(result)
       setIsSubmitted(true)
@@ -547,18 +603,27 @@ export default function QuizPage() {
               </button>
               <div className="h-6 w-px bg-gray-300"></div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{quiz.title}</h1>
+                <div className="flex items-center space-x-2">
+                  <h1 className="text-xl font-bold text-gray-900">{quiz.title}</h1>
+                  {isReviewMode && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      📖 Review Mode
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-gray-600">{quiz.description}</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <Clock className="w-4 h-4" />
-                <span className={timeLeft < 60 ? 'text-red-600 font-bold' : ''}>
-                  {formatTime(timeLeft)}
-                </span>
-              </div>
+              {!isReviewMode && (
+                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <Clock className="w-4 h-4" />
+                  <span className={timeLeft < 60 ? 'text-red-600 font-bold' : ''}>
+                    {formatTime(timeLeft)}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center space-x-2 text-sm text-gray-500">
                 <Target className="w-4 h-4" />
                 <span>{quiz.passingScore}% to pass</span>
@@ -636,9 +701,17 @@ export default function QuizPage() {
                 <input
                   type="text"
                   value={answers[currentQuestion.id] || ''}
-                  onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
+                  onChange={(e) => {
+                    if (isReviewMode) return; // Don't allow changes in review mode
+                    handleAnswerChange(currentQuestion.id, e.target.value)
+                  }}
                   placeholder="Enter your answer here..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warm-copper focus:border-warm-copper transition-colors"
+                  disabled={isReviewMode}
+                  className={`w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors ${
+                    isReviewMode 
+                      ? 'bg-gray-100 cursor-not-allowed' 
+                      : 'focus:ring-2 focus:ring-warm-copper focus:border-warm-copper'
+                  }`}
                 />
               </div>
               {currentQuestion.terminalCommand && (
@@ -658,20 +731,32 @@ export default function QuizPage() {
                 return (
                   <label
                     key={index}
-                    className={`block p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                    className={`block p-5 border-2 rounded-xl transition-all duration-200 ${
+                      isReviewMode 
+                        ? 'cursor-default' 
+                        : 'cursor-pointer'
+                    } ${
                       isSelected
-                        ? 'border-warm-copper bg-gradient-to-r from-warm-copper/5 to-warm-bronze/5 shadow-md' 
+                        ? isReviewMode
+                          ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-blue-100 shadow-md'
+                          : 'border-warm-copper bg-gradient-to-r from-warm-copper/5 to-warm-bronze/5 shadow-md'
+                        : isReviewMode
+                        ? 'border-gray-200 bg-gray-50'
                         : 'border-gray-200 hover:border-warm-copper/50 hover:bg-warm-copper/5 hover:shadow-sm'
                     }`}
                   >
                     <div className="flex items-start">
                       <div className={`w-6 h-6 rounded-full border-2 mr-4 mt-0.5 flex items-center justify-center transition-colors ${
                         isSelected
-                          ? 'border-warm-copper bg-warm-copper' 
+                          ? isReviewMode 
+                            ? 'border-blue-500 bg-blue-500' 
+                            : 'border-warm-copper bg-warm-copper'
                           : 'border-gray-300'
                       }`}>
                         {isSelected && (
-                          <div className="w-3 h-3 bg-white rounded-full"></div>
+                          <div className={`w-3 h-3 rounded-full ${
+                            isReviewMode ? 'bg-white' : 'bg-white'
+                          }`}></div>
                         )}
                       </div>
                       <div className="flex-1">
@@ -680,7 +765,9 @@ export default function QuizPage() {
                             {String.fromCharCode(65 + index)}.
                           </span>
                           {isSelected && (
-                            <div className="w-2 h-2 bg-warm-copper rounded-full"></div>
+                            <div className={`w-2 h-2 rounded-full ${
+                              isReviewMode ? 'bg-blue-500' : 'bg-warm-copper'
+                            }`}></div>
                           )}
                         </div>
                         <p className="text-gray-800 mt-1 leading-relaxed">{answer.text}</p>
@@ -691,7 +778,9 @@ export default function QuizPage() {
                       name={`question-${currentQuestion.id}`}
                       value={answer.text}
                       checked={isSelected}
+                      disabled={isReviewMode}
                       onChange={(e) => {
+                        if (isReviewMode) return; // Don't allow changes in review mode
                         if (currentQuestion.type === 'multiple_choice') {
                           const currentAnswers = Array.isArray(answers[currentQuestion.id]) ? answers[currentQuestion.id] as string[] : []
                           if (e.target.checked) {
@@ -724,21 +813,42 @@ export default function QuizPage() {
           </button>
 
           <div className="flex space-x-4">
-            {currentQuestionIndex === quiz.questions.length - 1 ? (
-              <button
-                onClick={handleSubmit}
-                className="bg-warm-copper text-white px-8 py-3 rounded-lg hover:bg-warm-bronze transition-colors flex items-center space-x-2"
-              >
-                <CheckCircle className="w-4 h-4" />
-                <span>Submit Quiz</span>
-              </button>
+            {isReviewMode ? (
+              // Review mode - only show Next/Previous, no Submit
+              currentQuestionIndex === quiz.questions.length - 1 ? (
+                <button
+                  onClick={() => router.push(`/learning/${courseId}`)}
+                  className="bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back to Course</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleNext}
+                  className="bg-warm-copper text-white px-6 py-3 rounded-lg hover:bg-warm-bronze transition-colors"
+                >
+                  Next Question
+                </button>
+              )
             ) : (
-              <button
-                onClick={handleNext}
-                className="bg-warm-copper text-white px-6 py-3 rounded-lg hover:bg-warm-bronze transition-colors"
-              >
-                Next Question
-              </button>
+              // Normal mode - show Submit/Next
+              currentQuestionIndex === quiz.questions.length - 1 ? (
+                <button
+                  onClick={handleSubmit}
+                  className="bg-warm-copper text-white px-8 py-3 rounded-lg hover:bg-warm-bronze transition-colors flex items-center space-x-2"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Submit Quiz</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleNext}
+                  className="bg-warm-copper text-white px-6 py-3 rounded-lg hover:bg-warm-bronze transition-colors"
+                >
+                  Next Question
+                </button>
+              )
             )}
           </div>
         </div>

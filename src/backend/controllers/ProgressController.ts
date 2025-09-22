@@ -370,4 +370,107 @@ export class ProgressController {
       });
     }
   }
+
+  // Get user's quiz attempts
+  async getUserQuizAttempts(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'User not authenticated' });
+        return;
+      }
+
+      const attempts = await this.progressService.getQuizAttempts(userId);
+      
+      res.json({
+        success: true,
+        attempts
+      });
+    } catch (error) {
+      console.error('Error getting user quiz attempts:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get quiz attempts'
+      });
+    }
+  }
+
+  // Get user's completed quizzes with details
+  async getUserCompletedQuizzes(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'User not authenticated' });
+        return;
+      }
+
+      const attempts = await this.progressService.getQuizAttempts(userId);
+      
+      // Get quiz details for each attempt
+      const completedQuizzes = await Promise.all(
+        attempts.map(async (attempt) => {
+          try {
+            // Get quiz details
+            const [quizRows] = await this.progressService['db'].getPool().execute(
+              `SELECT q.*, m.title as module_title, c.title as course_title 
+               FROM quizzes q 
+               LEFT JOIN modules m ON q.module_id = m.id 
+               LEFT JOIN courses c ON m.course_id = c.id 
+               WHERE q.id = ?`,
+              [attempt.quizId]
+            );
+            
+            const quiz = (quizRows as any[])[0];
+            
+            return {
+              ...attempt,
+              quiz: quiz ? {
+                id: quiz.id,
+                title: quiz.title,
+                description: quiz.description,
+                type: quiz.type,
+                moduleTitle: quiz.module_title,
+                courseTitle: quiz.course_title,
+                passingScore: quiz.passing_score,
+                timeLimit: quiz.time_limit
+              } : null
+            };
+          } catch (error) {
+            console.error(`Error getting quiz details for ${attempt.quizId}:`, error);
+            return {
+              ...attempt,
+              quiz: null
+            };
+          }
+        })
+      );
+
+      res.json({
+        success: true,
+        completedQuizzes
+      });
+    } catch (error) {
+      console.error('Error getting user completed quizzes:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get completed quizzes'
+      });
+    }
+  }
+
+  async createQuizAttempt(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'User not authenticated' });
+        return;
+      }
+
+      const quizAttempt = await this.progressService.createQuizAttempt(userId, req.body);
+      res.json({ success: true, quizAttempt });
+    } catch (error) {
+      console.error('Error creating quiz attempt:', error);
+      res.status(500).json({ success: false, message: 'Failed to create quiz attempt' });
+    }
+  }
 }

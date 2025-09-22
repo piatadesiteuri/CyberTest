@@ -80,6 +80,16 @@ export default function CoursePage() {
   const [course, setCourse] = useState<Course | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedModule, setSelectedModule] = useState<Module | null>(null)
+  const [completedQuizzes, setCompletedQuizzes] = useState<Set<string>>(new Set())
+  const [quizAttempts, setQuizAttempts] = useState<Map<string, any>>(new Map())
+  const [retakeTimers, setRetakeTimers] = useState<Map<string, number>>(new Map())
+
+  // Format time for display
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -132,6 +142,41 @@ export default function CoursePage() {
             }, {} as Record<string, any>)
             
             console.log('📚 Individual lesson progress:', lessonProgressMap)
+
+            // Fetch completed quizzes and attempts
+            try {
+              const completedQuizzesResponse = await fetch('http://localhost:3001/api/progress/completed-quizzes', {
+                headers: {
+                  'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+                  'Content-Type': 'application/json'
+                }
+              })
+            
+              if (completedQuizzesResponse.ok) {
+                const completedData = await completedQuizzesResponse.json()
+                if (completedData.success) {
+                  const completedQuizIds = new Set<string>(
+                    completedData.completedQuizzes
+                      .map((quiz: any) => quiz.quizId || quiz.quiz?.id)
+                      .filter((id: string) => id !== undefined && id !== null)
+                  )
+                  console.log('🎯 Completed quiz IDs:', completedQuizIds)
+                  setCompletedQuizzes(completedQuizIds)
+                  
+                  // Store quiz attempts for detailed info
+                  const attemptsMap = new Map<string, any>()
+                  completedData.completedQuizzes.forEach((quiz: any) => {
+                    const quizId = quiz.quizId || quiz.quiz?.id
+                    if (quizId) {
+                      attemptsMap.set(quizId, quiz)
+                    }
+                  })
+                  setQuizAttempts(attemptsMap)
+                }
+              }
+            } catch (error) {
+              console.error('Error fetching completed quizzes:', error)
+            }
             
             // Add progress data to course and lessons
             const courseWithProgress = {
@@ -213,10 +258,38 @@ export default function CoursePage() {
     fetchCourse()
   }, [courseId])
 
-  console.log('🎯 Component state - loading:', loading, 'course:', course)
+  // Timer for retake availability
+  useEffect(() => {
+    const updateRetakeTimers = () => {
+      const now = Date.now()
+      const newTimers = new Map<string, number>()
+      
+      quizAttempts.forEach((attempt, quizId) => {
+        if (attempt.score < 100 && attempt.completedAt) {
+          const completedTime = new Date(attempt.completedAt).getTime()
+          const timeSinceCompletion = now - completedTime
+          const retakeDelay = 15 * 60 * 1000 // 15 minutes in milliseconds
+          const timeUntilRetake = Math.max(0, retakeDelay - timeSinceCompletion)
+          
+          if (timeUntilRetake > 0) {
+            newTimers.set(quizId, Math.ceil(timeUntilRetake / 1000)) // Convert to seconds
+          }
+        }
+      })
+      
+      setRetakeTimers(newTimers)
+    }
+
+    // Update timers immediately
+    updateRetakeTimers()
+
+    // Update timers every second
+    const interval = setInterval(updateRetakeTimers, 1000)
+
+    return () => clearInterval(interval)
+  }, [quizAttempts])
 
   if (loading) {
-    console.log('⏳ Showing loading state')
     return (
       <div className="min-h-screen bg-gradient-to-br from-harmony-cream via-white to-harmony-tan flex items-center justify-center">
         <div className="text-center">
@@ -238,8 +311,6 @@ export default function CoursePage() {
       </div>
     )
   }
-
-  console.log('✅ Rendering course page with data:', course)
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -479,16 +550,65 @@ export default function CoursePage() {
                                   </span>
                                 )}
                                 {quiz.isUnlocked !== false ? (
-                                  <button 
-                                    onClick={() => router.push(`/learning/${courseId}/quiz/${quiz.id}`)}
-                                    className={`px-3 py-1 rounded text-sm transition-colors ${
-                                      quiz.type === 'final_exam'
-                                        ? 'bg-amber-600 text-white hover:bg-amber-700'
-                                        : 'bg-warm-copper text-white hover:bg-warm-bronze'
-                                    }`}
-                                  >
-                                    {quiz.type === 'final_exam' ? 'Start Final Exam' : 'Start Quiz'}
-                                  </button>
+                                  completedQuizzes.has(quiz.id) ? (
+                                    <div className="flex flex-col space-y-2">
+                                      <div className="flex items-center space-x-2">
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                          ✓ Quiz Completed
+                                        </span>
+                                        {quizAttempts.has(quiz.id) && (
+                                          <span className="text-xs text-gray-600">
+                                            Score: {quizAttempts.get(quiz.id)?.score || 0}%
+                                          </span>
+                                        )}
+                                      </div>
+                                      {quizAttempts.has(quiz.id) && quizAttempts.get(quiz.id)?.score === 100 ? (
+                                        <div className="flex space-x-2">
+                                          <button 
+                                            onClick={() => router.push(`/learning/${courseId}/quiz/${quiz.id}?mode=review`)}
+                                            className="px-3 py-1 rounded text-sm transition-colors bg-blue-600 text-white hover:bg-blue-700"
+                                          >
+                                            Review Quiz
+                                          </button>
+                                          <button 
+                                            onClick={() => router.push(`/learning/${courseId}/quiz/${quiz.id}`)}
+                                            className="px-3 py-1 rounded text-sm transition-colors bg-gray-600 text-white hover:bg-gray-700"
+                                          >
+                                            Retake Quiz
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        retakeTimers.has(quiz.id) ? (
+                                          <div className="flex items-center space-x-2 text-sm text-gray-500">
+                                            <Clock className="w-4 h-4" />
+                                            <span>Retake available in: {formatTime(retakeTimers.get(quiz.id)!)}</span>
+                                          </div>
+                                        ) : (
+                                          <button 
+                                            onClick={() => router.push(`/learning/${courseId}/quiz/${quiz.id}`)}
+                                            className={`px-3 py-1 rounded text-sm transition-colors ${
+                                              quiz.type === 'final_exam'
+                                                ? 'bg-amber-600 text-white hover:bg-amber-700'
+                                                : 'bg-warm-copper text-white hover:bg-warm-bronze'
+                                            }`}
+                                          >
+                                            {quiz.type === 'final_exam' ? 'Start Final Exam' : 'Start Quiz'}
+                                          </button>
+                                        )
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <button 
+                                      onClick={() => router.push(`/learning/${courseId}/quiz/${quiz.id}`)}
+                                      className={`px-3 py-1 rounded text-sm transition-colors ${
+                                        quiz.type === 'final_exam'
+                                          ? 'bg-amber-600 text-white hover:bg-amber-700'
+                                          : 'bg-warm-copper text-white hover:bg-warm-bronze'
+                                      }`}
+                                    >
+                                      {quiz.type === 'final_exam' ? 'Start Final Exam' : 'Start Quiz'}
+                                    </button>
+                                  )
                                 ) : (
                                   <button 
                                     disabled

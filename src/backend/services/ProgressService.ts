@@ -23,9 +23,10 @@ export interface QuizAttempt {
   quizId: string;
   answers: { [questionId: string]: string | string[] };
   score: number;
+  totalQuestions: number;
+  correctAnswers: number;
   passed: boolean;
   timeSpent: number;
-  attemptNumber: number;
   completedAt: Date;
   createdAt: Date;
 }
@@ -208,45 +209,38 @@ export class ProgressService {
   }
 
   // Quiz Attempt Management
-  async createQuizAttempt(data: CreateQuizAttemptData): Promise<QuizAttempt> {
+  async createQuizAttempt(userId: string, quizAttemptData: any): Promise<QuizAttempt> {
     const id = uuidv4();
     const now = new Date();
-    
-    // Get the attempt number for this user and quiz
-    const [attemptRows] = await this.db.getPool().execute(
-      `SELECT MAX(attempt_number) as attempt_number FROM quiz_attempts 
-       WHERE user_id = ? AND quiz_id = ?`,
-      [data.userId, data.quizId]
-    );
-    
-    const attemptNumber = ((attemptRows as {attempt_number: number}[])[0]?.attempt_number || 0) + 1;
+    const { quizId, answers, score, totalQuestions, correctAnswers, timeSpent, passed } = quizAttemptData;
 
     await this.db.getPool().execute(
-      `INSERT INTO quiz_attempts (id, user_id, quiz_id, answers, score, passed, time_spent, attempt_number, completed_at, created_at)
+      `INSERT INTO quiz_attempts (id, user_id, quiz_id, answers, score, total_questions, correct_answers, time_spent, passed, completed_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
-        data.userId,
-        data.quizId,
-        JSON.stringify(data.answers),
-        data.score,
-        data.passed,
-        data.timeSpent,
-        attemptNumber,
-        now,
+        userId,
+        quizId,
+        JSON.stringify(answers),
+        score,
+        totalQuestions || 0,
+        correctAnswers || 0,
+        timeSpent,
+        passed,
         now
       ]
     );
 
     return {
       id,
-      userId: data.userId,
-      quizId: data.quizId,
-      answers: data.answers,
-      score: data.score,
-      passed: data.passed,
-      timeSpent: data.timeSpent,
-      attemptNumber,
+      userId,
+      quizId,
+      answers,
+      score,
+      totalQuestions: totalQuestions || 0,
+      correctAnswers: correctAnswers || 0,
+      passed,
+      timeSpent,
       completedAt: now,
       createdAt: now
     };
@@ -261,12 +255,21 @@ export class ProgressService {
       params.push(quizId);
     }
 
-    sql += ` ORDER BY created_at DESC`;
+    sql += ` ORDER BY completed_at DESC`;
 
     const [rows] = await this.db.getPool().execute(sql, params);
-    return (rows as QuizAttempt[]).map(row => ({
-      ...row,
-      answers: typeof row.answers === 'string' ? JSON.parse(row.answers) : row.answers
+    return (rows as any[]).map(row => ({
+      id: row.id,
+      userId: row.user_id,
+      quizId: row.quiz_id,
+      answers: typeof row.answers === 'string' ? JSON.parse(row.answers) : row.answers,
+      score: row.score,
+      totalQuestions: row.total_questions,
+      correctAnswers: row.correct_answers,
+      passed: row.passed,
+      timeSpent: row.time_spent,
+      completedAt: row.completed_at,
+      createdAt: row.created_at
     }));
   }
 
@@ -276,12 +279,21 @@ export class ProgressService {
       [id]
     );
     
-    if ((rows as QuizAttempt[]).length === 0) return null;
+    if ((rows as any[]).length === 0) return null;
     
-    const row = (rows as QuizAttempt[])[0];
+    const row = (rows as any[])[0];
     return {
-      ...row,
-      answers: typeof row.answers === 'string' ? JSON.parse(row.answers) : row.answers
+      id: row.id,
+      userId: row.user_id,
+      quizId: row.quiz_id,
+      answers: typeof row.answers === 'string' ? JSON.parse(row.answers) : row.answers,
+      score: row.score,
+      totalQuestions: row.total_questions,
+      correctAnswers: row.correct_answers,
+      passed: row.passed,
+      timeSpent: row.time_spent,
+      completedAt: row.completed_at,
+      createdAt: row.created_at
     };
   }
 
@@ -634,4 +646,5 @@ export class ProgressService {
 
     return { unlocked, locked };
   }
+
 }

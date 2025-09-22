@@ -322,6 +322,11 @@ app.get('/api/progress/quiz/:quizId/unlock', authenticateToken, (req, res) => pr
 app.get('/api/progress/course/:courseId/quizzes', authenticateToken, (req, res) => progressController.getAvailableQuizzes(req, res));
 app.get('/api/progress/module/:moduleId', authenticateToken, (req, res) => progressController.getModuleProgress(req, res));
 
+// User quiz attempts and completed quizzes
+app.get('/api/progress/quiz-attempts', authenticateToken, (req, res) => progressController.getUserQuizAttempts(req, res));
+app.get('/api/progress/completed-quizzes', authenticateToken, (req, res) => progressController.getUserCompletedQuizzes(req, res));
+app.post('/api/progress/quiz-attempt', authenticateToken, (req, res) => progressController.createQuizAttempt(req, res));
+
 // Start server
 const startServer = async () => {
   await connectDB();

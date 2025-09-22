@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardHeader from './DashboardHeader'
-import { BookOpen, Trophy, Clock, Star, ChevronRight, Play, CheckCircle, Lock, Users, Target, Zap } from 'lucide-react'
+import { BookOpen, Trophy, Clock, Star, ChevronRight, Play, CheckCircle, Lock, Users, Target, Zap, BarChart3 } from 'lucide-react'
 import CyberShield from './icons/CyberShield'
 import PhishingHook from './icons/PhishingHook'
 import SecurityLock from './icons/SecurityLock'
@@ -365,6 +365,13 @@ export default function UserDashboard() {
             >
               <PhishingHook className="w-5 h-5 mr-2" />
               Take Simulation
+            </button>
+            <button 
+              onClick={() => router.push('/dashboard/personal')}
+              className="bg-white/20 text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/30 transition-colors flex items-center"
+            >
+              <BarChart3 className="w-5 h-5 mr-2" />
+              My Progress
             </button>
             <button 
               onClick={() => {

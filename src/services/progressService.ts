@@ -85,6 +85,14 @@ class ProgressService {
   async getNextLesson(courseId: string) {
     return this.makeRequest(`/progress/next-lesson/${courseId}`);
   }
+
+  // Create quiz attempt
+  async createQuizAttempt(quizAttempt: any) {
+    return this.makeRequest('/progress/quiz-attempt', {
+      method: 'POST',
+      body: JSON.stringify(quizAttempt),
+    });
+  }
 }
 
 export const progressService = new ProgressService();
