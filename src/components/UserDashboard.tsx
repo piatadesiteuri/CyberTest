@@ -443,8 +443,8 @@ export default function UserDashboard() {
         </div>
 
         {/* Current Learning Progress */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-12 border border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Current Learning Progress</h2>
+        <div className="bg-gradient-to-br from-white/90 to-harmony-tan/30 rounded-2xl shadow-lg p-8 mb-12 border border-warm-gold/20 mt-8">
+          <h2 className="text-2xl font-bold text-harmony-dark mb-6">Current Learning Progress</h2>
           
           {loading ? (
             <div className="text-center py-8">
