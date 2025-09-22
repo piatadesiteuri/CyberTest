@@ -8,8 +8,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.backend.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for TypeScript)
+RUN npm ci
 
 # Copy source code
 COPY src/ ./src/
@@ -17,12 +17,12 @@ COPY src/ ./src/
 # Install TypeScript and ts-node globally
 RUN npm install -g typescript ts-node
 
-# Expose port
-EXPOSE 3001
+# Expose port (Railway will override with its own port)
+EXPOSE 8080
 
-# Health check
+# Health check (use PORT environment variable)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3001/health || exit 1
+  CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
 
 # Start the application
 CMD ["npm", "run", "railway:backend"]
