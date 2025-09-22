@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 import { databaseConfig } from '../../config/database';
 
 const createAdvancedLearningContent = async () => {

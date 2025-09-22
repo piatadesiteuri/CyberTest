@@ -1,5 +1,5 @@
 import DatabaseConnection from '../utils/DatabaseConnection';
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 export interface PhishingSimulationSession {
   id: string;

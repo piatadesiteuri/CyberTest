@@ -1,0 +1,5 @@
+FINAL CORS FIX: Added new frontend URL
+Old frontend: https://cybertest-production.up.railway.app
+New frontend: https://cybertest-frontend-production.up.railway.app
+Added to CORS origins - this will fix login error
+Mon Sep 22 21:30:07 EEST 2025

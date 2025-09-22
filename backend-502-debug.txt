@@ -1,0 +1,4 @@
+BACKEND DOWN: 502 Bad Gateway
+Railway backend service not responding at all
+Need to check Railway backend logs and force rebuild
+Mon Sep 22 21:38:15 EEST 2025

@@ -1,0 +1,4 @@
+FINAL CHECK: Backend service configuration
+Current backend logs show duplicate message - still using old Dockerfile
+Must use Dockerfile.backend with single CORS config
+Mon Sep 22 21:14:03 EEST 2025

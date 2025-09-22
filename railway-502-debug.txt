@@ -1,0 +1,11 @@
+FORCE RAILWAY BACKEND REDEPLOY: Backend shows success in logs but Railway Edge returns 502
+
+Possible causes:
+1. Railway not using Dockerfile.backend 
+2. Railway using cached old container
+3. Railway backend service misconfigured
+
+Need to verify Railway backend service settings:
+- Dockerfile Path: must be Dockerfile.backend
+- Start Command: must be npm run railway:backend
+Mon Sep 22 22:26:53 EEST 2025

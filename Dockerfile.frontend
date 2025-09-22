@@ -1,0 +1,38 @@
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY next.config.js ./
+COPY tsconfig.json ./
+COPY tailwind.config.js ./
+COPY postcss.config.js ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY src/ ./src/
+
+# Create public directory if it doesn't exist
+RUN mkdir -p public
+
+# Set environment variables for Next.js
+ENV NODE_ENV=production
+ENV NEXT_PUBLIC_API_URL=https://secure-appreciation-production.up.railway.app/api
+ENV PORT=3000
+
+# Build the Next.js application
+RUN npm run build
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000 || exit 1
+
+# Start the Next.js application
+CMD ["npm", "start"]

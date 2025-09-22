@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+// import path from 'path'; // Not needed for backend-only
 import { CourseController } from './controllers/CourseController'
 import { LearningController } from './controllers/LearningController';
 import { PhishingController } from './controllers/PhishingController';
@@ -13,7 +14,12 @@ import { ProgressController } from './controllers/ProgressController';
 import { authenticateToken } from './middleware/AuthMiddleware';
 import { jwtConfig } from '../config/database';
 
-dotenv.config();
+// Load .env file only if it exists (for local development)
+try {
+  dotenv.config();
+} catch (error) {
+  console.log('No .env file found, using environment variables');
+}
 
 const app = express();
 const PORT = parseInt(process.env.PORT || process.env.RAILWAY_PORT || '3001', 10);
@@ -52,49 +58,60 @@ const connectDB = async () => {
 };
 
 // Middleware
+console.log('🔧 Backend-only mode - frontend served separately');
+console.log('🚀 BACKEND EXPRESS SERVER STARTING - NOT NEXT.JS!');
+console.log('📁 Current working directory:', process.cwd());
+console.log('📝 Script path:', __filename);
+
 app.use(cors({
   origin: [
     'http://localhost:3000', 
     'http://localhost:3001', 
     'http://localhost:3002',
-    'https://cybertest-production.up.railway.app'
+    'https://cybertest-production.up.railway.app',
+    'https://cybertest-frontend-production.up.railway.app'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  preflightContinue: false
 }));
 
-// Handle preflight requests - use middleware instead of specific route
+// DEBUG: Log toate request-urile
 app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.method === 'OPTIONS') {
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3001', 
-      'http://localhost:3002',
-      'https://cybertest-production.up.railway.app'
-    ];
-    
-    const origin = req.headers.origin;
-    if (origin && allowedOrigins.includes(origin)) {
-      res.header('Access-Control-Allow-Origin', origin);
-    } else {
-      res.header('Access-Control-Allow-Origin', 'https://cybertest-production.up.railway.app');
-    }
-    
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.sendStatus(200);
-  } else {
-    next();
-  }
+  console.log('🔍 REQUEST:', {
+    method: req.method,
+    url: req.url,
+    origin: req.headers.origin,
+    userAgent: req.headers['user-agent'],
+    contentType: req.headers['content-type'],
+    authorization: req.headers.authorization ? 'Present' : 'Missing',
+    body: req.method === 'POST' ? req.body : 'N/A',
+    timestamp: new Date().toISOString()
+  });
+  next();
 });
 
 app.use(express.json());
 
+// DEBUG: Log specific OPTIONS requests for CORS
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.method === 'OPTIONS') {
+    console.log('🌐 OPTIONS (CORS PREFLIGHT):', {
+      url: req.url,
+      origin: req.headers.origin,
+      method: req.headers['access-control-request-method'],
+      headers: req.headers['access-control-request-headers'],
+      timestamp: new Date().toISOString()
+    });
+  }
+  next();
+});
+
 // Health check
 app.get('/health', (req: Request, res: Response) => {
+  console.log('💚 HEALTH CHECK accessed');
   res.json({
     success: true,
     message: 'Backend server is running',
@@ -191,7 +208,15 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
 // Login endpoint with database verification
 app.post('/api/auth/login', async (req: Request, res: Response) => {
   try {
-    console.log('Login request received:', req.body);
+    console.log('🔐 LOGIN REQUEST received:', {
+      body: req.body,
+      headers: {
+        origin: req.headers.origin,
+        contentType: req.headers['content-type'],
+        userAgent: req.headers['user-agent']
+      },
+      timestamp: new Date().toISOString()
+    });
     
     if (!db) {
       return res.status(500).json({
@@ -263,6 +288,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
       { expiresIn: JWT_REFRESH_EXPIRES_IN as any }
     );
 
+    console.log('✅ LOGIN SUCCESS for user:', user.email);
     return res.status(200).json({
       success: true,
       message: 'Login successful',
@@ -282,7 +308,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('❌ LOGIN ERROR:', error);
     return res.status(500).json({
       success: false,
       message: 'Login failed'
@@ -381,6 +407,8 @@ app.get('/api/progress/module/:moduleId', authenticateToken, (req: Request, res:
 app.get('/api/progress/quiz-attempts', authenticateToken, (req: Request, res: Response) => progressController.getUserQuizAttempts(req, res));
 app.get('/api/progress/completed-quizzes', authenticateToken, (req: Request, res: Response) => progressController.getUserCompletedQuizzes(req, res));
 app.post('/api/progress/quiz-attempt', authenticateToken, (req: Request, res: Response) => progressController.createQuizAttempt(req, res));
+
+// Backend only - no frontend serving
 
 // Start server
 const startServer = async () => {

@@ -1,0 +1,5 @@
+CRITICAL FIX: Backend port mismatch resolved
+Dockerfile.backend was using PORT=3001 but Railway expects 8080
+Server was running on 8080 but healthcheck was checking 3001
+Updated Dockerfile.backend to use 8080 everywhere
+Mon Sep 22 22:21:19 EEST 2025
