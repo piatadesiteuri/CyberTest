@@ -200,16 +200,16 @@ export class ProgressService {
          COUNT(DISTINCT l.id) as total_lessons,
          COUNT(DISTINCT q.id) as total_quizzes,
          COUNT(DISTINCT CASE WHEN up_lessons.status = 'completed' THEN up_lessons.lesson_id END) as completed_lessons,
-         COUNT(DISTINCT CASE WHEN up_quizzes.status = 'completed' THEN up_quizzes.quiz_id END) as completed_quizzes
+         COUNT(DISTINCT CASE WHEN qa.completed_at IS NOT NULL THEN qa.quiz_id END) as completed_quizzes
        FROM modules m
        LEFT JOIN lessons l ON m.id = l.module_id
        LEFT JOIN quizzes q ON m.id = q.module_id
        LEFT JOIN user_progress up_lessons ON up_lessons.lesson_id = l.id AND up_lessons.user_id = ? AND up_lessons.course_id = ?
-       LEFT JOIN user_progress up_quizzes ON up_quizzes.quiz_id = q.id AND up_quizzes.user_id = ? AND up_quizzes.course_id = ?
+       LEFT JOIN quiz_attempts qa ON qa.quiz_id = q.id AND qa.user_id = ?
        WHERE m.course_id = ?
        GROUP BY m.id
        HAVING completed_lessons = total_lessons AND completed_quizzes = total_quizzes`,
-      [userId, courseId, userId, courseId, courseId]
+      [userId, courseId, userId, courseId]
     );
 
     const completedModules = (completedModulesRows as any[]).length;
