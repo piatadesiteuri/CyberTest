@@ -21,6 +21,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "moduleResolution": "node",
+    "typeRoots": ["./node_modules/@types"],
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"]
@@ -31,7 +32,8 @@
   },
   "include": [
     "src/backend/**/*",
-    "src/config/**/*"
+    "src/config/**/*",
+    "node_modules/@types/**/*"
   ],
   "exclude": [
     "node_modules",
