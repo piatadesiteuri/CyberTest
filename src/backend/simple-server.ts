@@ -367,7 +367,6 @@ app.get('/api/progress/completed-quizzes', authenticateToken, (req: Request, res
 app.post('/api/progress/quiz-attempt', authenticateToken, (req: Request, res: Response) => progressController.createQuizAttempt(req, res));
 
 // Backend only - no frontend serving
-console.log('🔧 Backend-only mode - frontend served separately');
 
 // Start server
 const startServer = async () => {
