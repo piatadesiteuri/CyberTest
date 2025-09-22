@@ -17,6 +17,7 @@ dotenv.config();
 
 const app = express();
 const PORT = parseInt(process.env.PORT || process.env.RAILWAY_PORT || '3001', 10);
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // JWT Configuration from config file
 const JWT_SECRET = jwtConfig.secret;
@@ -25,11 +26,11 @@ const JWT_REFRESH_EXPIRES_IN = jwtConfig.refreshExpiresIn;
 
 // Database connection
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
+  host: NODE_ENV === 'production' ? process.env.DB_HOST : 'localhost',
   port: parseInt(process.env.DB_PORT || '3306'),
-  database: process.env.DB_NAME || 'cyber',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  database: NODE_ENV === 'production' ? process.env.DB_NAME : 'cyber',
+  user: NODE_ENV === 'production' ? process.env.DB_USER : 'root',
+  password: NODE_ENV === 'production' ? process.env.DB_PASSWORD : '',
 };
 
 let db: mysql.Connection | null = null;
@@ -388,9 +389,9 @@ const startServer = async () => {
   console.log('  - PORT:', process.env.PORT);
   console.log('  - RAILWAY_PORT:', process.env.RAILWAY_PORT);
   console.log('  - Final PORT:', PORT);
-  console.log('  - NODE_ENV:', process.env.NODE_ENV);
-  console.log('  - DB_HOST:', process.env.DB_HOST);
-  console.log('  - DB_NAME:', process.env.DB_NAME);
+  console.log('  - NODE_ENV:', NODE_ENV);
+  console.log('  - DB_HOST:', dbConfig.host);
+  console.log('  - DB_NAME:', dbConfig.database);
   console.log('  - JWT_SECRET:', process.env.JWT_SECRET ? 'Set' : 'Not set');
   
   await connectDB();
