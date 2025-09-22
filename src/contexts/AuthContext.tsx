@@ -16,6 +16,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Clean up corrupted localStorage data
     try {
       const userStr = localStorage.getItem('user')
+      const accessToken = localStorage.getItem('accessToken')
+      const refreshToken = localStorage.getItem('refreshToken')
+      
+      console.log('AuthContext useEffect - localStorage data:')
+      console.log('  user:', userStr)
+      console.log('  accessToken:', accessToken ? 'exists' : 'missing')
+      console.log('  refreshToken:', refreshToken ? 'exists' : 'missing')
+      
       if (userStr === 'undefined' || userStr === 'null') {
         console.log('Cleaning up corrupted localStorage data')
         localStorage.removeItem('user')
@@ -30,10 +38,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Check if user is already logged in
     const currentUser = authService.getCurrentUser()
+    const isAuth = authService.isAuthenticated()
     console.log('AuthContext useEffect - currentUser:', currentUser)
-    console.log('AuthContext useEffect - isAuthenticated:', authService.isAuthenticated())
-    if (currentUser && authService.isAuthenticated()) {
+    console.log('AuthContext useEffect - isAuthenticated:', isAuth)
+    
+    if (currentUser && isAuth) {
+      console.log('Setting user from localStorage')
       setUser(currentUser)
+    } else {
+      console.log('No valid user found, setting to null')
+      setUser(null)
     }
     setIsLoading(false)
   }, [])

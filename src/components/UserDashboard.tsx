@@ -26,30 +26,65 @@ export default function UserDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch courses and dashboard data in parallel
-        const [coursesData, dashboardData] = await Promise.all([
-          courseService.getCourses(),
-          userDashboardService.getUserDashboardData()
-        ])
+        console.log('Fetching data, user:', user)
+        // First fetch courses (no auth required)
+        const coursesData = await courseService.getCourses()
+        console.log('Courses fetched:', coursesData)
+        setCourses(coursesData)
         
-        // Fetch progress for each course
-        const coursesWithProgress = await Promise.all(
-          coursesData.map(async (course) => {
-            try {
-              const progressResponse = await progressService.getCourseProgress(course.id)
-              return {
-                ...course,
-                userProgress: progressResponse.data
-              }
-            } catch (error) {
-              console.error(`Error fetching progress for course ${course.id}:`, error)
-              return course
-            }
+        // Only fetch dashboard data if user is authenticated
+        if (user) {
+          try {
+            const dashboardData = await userDashboardService.getUserDashboardData()
+            setDashboardData(dashboardData)
+            
+            // Fetch progress for each course
+            const coursesWithProgress = await Promise.all(
+              coursesData.map(async (course) => {
+                try {
+                  const progressResponse = await progressService.getCourseProgress(course.id)
+                  return {
+                    ...course,
+                    userProgress: progressResponse.data
+                  }
+                } catch (error) {
+                  console.error(`Error fetching progress for course ${course.id}:`, error)
+                  return course
+                }
+              })
+            )
+            setCourses(coursesWithProgress)
+          } catch (error) {
+            console.error('Error fetching dashboard data:', error)
+            // Set default dashboard data for unauthenticated users
+            setDashboardData({
+              overallProgress: 0,
+              completedLessons: 0,
+              totalLessons: 0,
+              completedModules: 0,
+              totalModules: 0,
+              completedQuizzes: [],
+              recentActivity: [],
+              totalTimeSpent: 0,
+              averageScore: 0,
+              lastActivity: null
+            })
+          }
+        } else {
+          // Set default dashboard data for unauthenticated users
+          setDashboardData({
+            overallProgress: 0,
+            completedLessons: 0,
+            totalLessons: 0,
+            completedModules: 0,
+            totalModules: 0,
+            completedQuizzes: [],
+            recentActivity: [],
+            totalTimeSpent: 0,
+            averageScore: 0,
+            lastActivity: null
           })
-        )
-        
-        setCourses(coursesWithProgress)
-        setDashboardData(dashboardData)
+        }
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {
@@ -58,17 +93,21 @@ export default function UserDashboard() {
     }
 
     fetchData()
-  }, [])
+  }, [user])
 
   const handleCourseClick = (courseId: string) => {
     router.push(`/learning/${courseId}`)
   }
 
   const handleResumeTraining = () => {
+    console.log('Resume Training clicked, courses:', courses)
     // Find foundation course and redirect to first lesson
     const foundationCourse = courses.find(course => course.level === 'foundation')
+    console.log('Foundation course found:', foundationCourse)
     if (foundationCourse) {
       router.push(`/learning/${foundationCourse.id}`)
+    } else {
+      console.log('No foundation course found')
     }
   }
 

@@ -41,7 +41,7 @@ class UserDashboardService {
 
   async getUserDashboardData(): Promise<UserDashboardData> {
     try {
-      const token = authService.getToken();
+      const token = authService.getAccessToken();
       if (!token) {
         throw new Error('No authentication token found');
       }
@@ -84,15 +84,15 @@ class UserDashboardService {
       const lastActivity = recentActivity.length > 0 ? recentActivity[0].completedAt : null;
 
       return {
-        overallProgress: progressData.overallProgress || 0,
-        completedLessons: progressData.completedLessons || 0,
-        totalLessons: progressData.totalLessons || 0,
-        completedModules: progressData.completedModules || 0,
-        totalModules: progressData.totalModules || 0,
+        overallProgress: progressData.data?.completedCourses > 0 ? 100 : 0, // Simplified for now
+        completedLessons: progressData.data?.completedLessons || 0,
+        totalLessons: progressData.data?.completedLessons || 0, // Will be updated when we have total lessons
+        completedModules: progressData.data?.completedCourses || 0,
+        totalModules: progressData.data?.completedCourses || 0, // Will be updated when we have total modules
         completedQuizzes,
         recentActivity,
-        totalTimeSpent,
-        averageScore: Math.round(averageScore),
+        totalTimeSpent: progressData.data?.totalTimeSpent || 0,
+        averageScore: progressData.data?.averageQuizScore || 0,
         lastActivity
       };
     } catch (error) {
@@ -103,7 +103,7 @@ class UserDashboardService {
 
   async getQuizAttempts(): Promise<QuizAttempt[]> {
     try {
-      const token = authService.getToken();
+      const token = authService.getAccessToken();
       if (!token) {
         throw new Error('No authentication token found');
       }
@@ -129,7 +129,7 @@ class UserDashboardService {
 
   async getCompletedQuizzes(): Promise<QuizAttempt[]> {
     try {
-      const token = authService.getToken();
+      const token = authService.getAccessToken();
       if (!token) {
         throw new Error('No authentication token found');
       }
