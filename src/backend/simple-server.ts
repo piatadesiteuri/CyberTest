@@ -58,6 +58,8 @@ const connectDB = async () => {
 };
 
 // Middleware
+console.log('🔧 Backend-only mode - frontend served separately');
+
 app.use(cors({
   origin: [
     'http://localhost:3000', 
@@ -68,34 +70,9 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  preflightContinue: false
 }));
-
-// Handle preflight requests - use middleware instead of specific route
-app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.method === 'OPTIONS') {
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3001', 
-      'http://localhost:3002',
-      'https://cybertest-production.up.railway.app'
-    ];
-    
-    const origin = req.headers.origin;
-    if (origin && allowedOrigins.includes(origin)) {
-      res.header('Access-Control-Allow-Origin', origin);
-    } else {
-      res.header('Access-Control-Allow-Origin', 'https://cybertest-production.up.railway.app');
-    }
-    
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.sendStatus(200);
-  } else {
-    next();
-  }
-});
 
 app.use(express.json());
 
