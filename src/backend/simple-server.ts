@@ -5,6 +5,7 @@ import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { CourseController } from './controllers/CourseController'
+import { LearningController } from './controllers/LearningController';
 import { PhishingController } from './controllers/PhishingController';
 import { AdminController } from './controllers/AdminController';
 import { ProgressController } from './controllers/ProgressController';
@@ -32,6 +33,7 @@ const dbConfig = {
 
 let db: mysql.Connection | null = null;
 const courseController = new CourseController();
+const learningController = new LearningController();
 const phishingController = new PhishingController();
 const adminController = new AdminController();
 const progressController = new ProgressController();
@@ -48,7 +50,7 @@ const connectDB = async () => {
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -58,7 +60,7 @@ app.use(cors({
 // Handle preflight requests - use middleware instead of specific route
 app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
-    res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.header('Access-Control-Allow-Origin', req.headers.origin || 'http://localhost:3002');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -267,9 +269,32 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Course routes
+// Course routes (legacy)
 app.get('/api/courses', (req, res) => courseController.getCourses(req, res));
 app.get('/api/courses/:id', (req, res) => courseController.getCourseById(req, res));
+
+// Learning routes
+app.post('/api/learning/courses', (req, res) => learningController.createCourse(req, res));
+app.get('/api/learning/courses/published', (req, res) => learningController.getAllPublishedCourses(req, res));
+app.get('/api/learning/courses/:id', (req, res) => learningController.getCourseById(req, res));
+app.get('/api/learning/courses/level/:level', (req, res) => learningController.getCoursesByLevel(req, res));
+
+// Module routes
+app.post('/api/learning/modules', (req, res) => learningController.createModule(req, res));
+app.get('/api/learning/courses/:courseId/modules', (req, res) => learningController.getModulesByCourseId(req, res));
+
+// Lesson routes
+app.post('/api/learning/lessons', (req, res) => learningController.createLesson(req, res));
+app.get('/api/learning/modules/:moduleId/lessons', (req, res) => learningController.getLessonsByModuleId(req, res));
+
+// Quiz routes
+app.post('/api/learning/quizzes', (req, res) => learningController.createQuiz(req, res));
+app.get('/api/learning/quizzes/:id', (req, res) => learningController.getQuizById(req, res));
+app.get('/api/learning/modules/:moduleId/quizzes', (req, res) => learningController.getQuizzesByModuleId(req, res));
+
+// Question routes
+app.post('/api/learning/questions', (req, res) => learningController.createQuestion(req, res));
+app.get('/api/learning/quizzes/:quizId/questions', (req, res) => learningController.getQuestionsByQuizId(req, res));
 
 // Phishing simulation routes
 app.post('/api/phishing/campaigns', (req, res) => phishingController.createCampaign(req, res));

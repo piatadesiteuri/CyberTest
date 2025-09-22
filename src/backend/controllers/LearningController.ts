@@ -227,6 +227,25 @@ export class LearningController {
     }
   }
 
+  async getQuizzesByModuleId(req: Request, res: Response): Promise<void> {
+    try {
+      const { moduleId } = req.params;
+      const quizzes = await this.learningService.getQuizzesByModuleId(moduleId);
+      
+      res.json({
+        success: true,
+        data: quizzes
+      });
+    } catch (error) {
+      console.error('Get quizzes by module ID error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get quizzes',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
   // Question Management
   async createQuestion(req: Request, res: Response): Promise<void> {
     try {
@@ -243,6 +262,25 @@ export class LearningController {
       res.status(500).json({
         success: false,
         message: 'Failed to create question',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  async getQuestionsByQuizId(req: Request, res: Response): Promise<void> {
+    try {
+      const { quizId } = req.params;
+      const questions = await this.learningService.getQuestionsByQuizId(quizId);
+      
+      res.json({
+        success: true,
+        data: questions
+      });
+    } catch (error) {
+      console.error('Get questions by quiz ID error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get questions',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
