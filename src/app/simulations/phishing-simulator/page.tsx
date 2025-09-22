@@ -4,6 +4,29 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Mail, AlertTriangle, CheckCircle, XCircle, Eye, MousePointer, Download, Shield, Clock } from 'lucide-react'
 
+interface PhishingCampaign {
+  id: string
+  title: string
+  description: string
+  type: 'phishing' | 'smishing' | 'vishing'
+  status: string
+  targetGroups: string[]
+  startDate: string
+  endDate: string
+}
+
+interface PhishingTemplate {
+  id: string
+  campaignId: string
+  subject: string
+  content: string
+  senderName: string
+  senderEmail: string
+  landingPageUrl: string
+  isActive: boolean
+  createdAt: string
+}
+
 interface PhishingEmail {
   id: string
   subject: string
@@ -20,6 +43,9 @@ interface PhishingEmail {
   difficulty: 'easy' | 'medium' | 'hard'
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+// Mock data for fallback
 const phishingEmails: PhishingEmail[] = [
   {
     id: 'paypal-urgent',
@@ -178,6 +204,9 @@ const phishingEmails: PhishingEmail[] = [
 
 export default function PhishingSimulatorPage() {
   const router = useRouter()
+  const [campaigns, setCampaigns] = useState<PhishingCampaign[]>([])
+  const [templates, setTemplates] = useState<PhishingTemplate[]>([])
+  const [currentTemplate, setCurrentTemplate] = useState<PhishingTemplate | null>(null)
   const [currentEmail, setCurrentEmail] = useState(0)
   const [userActions, setUserActions] = useState<{
     emailOpened: boolean
@@ -194,8 +223,26 @@ export default function PhishingSimulatorPage() {
   })
   const [showAnalysis, setShowAnalysis] = useState(false)
   const [timeSpent, setTimeSpent] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [simulationSession, setSimulationSession] = useState<string | null>(null)
 
-  const email = phishingEmails[currentEmail]
+  const email = currentTemplate ? {
+    id: currentTemplate.id,
+    subject: currentTemplate.subject,
+    sender: currentTemplate.senderName,
+    senderEmail: currentTemplate.senderEmail,
+    content: currentTemplate.content,
+    attachments: [],
+    links: [
+      { text: 'Click here', url: currentTemplate.landingPageUrl, isMalicious: true }
+    ],
+    redFlags: ['Suspicious sender', 'Urgent action required'],
+    difficulty: 'easy' as const
+  } : phishingEmails[currentEmail]
+
+  useEffect(() => {
+    fetchActiveCampaigns()
+  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -216,13 +263,98 @@ export default function PhishingSimulatorPage() {
     }
   }, [])
 
-  const handleLinkClick = (linkUrl: string, isMalicious: boolean) => {
+  const fetchActiveCampaigns = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`${API_BASE_URL}/api/phishing-simulation/campaigns/active`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setCampaigns(data.data)
+        // Load templates for first campaign
+        if (data.data.length > 0) {
+          await fetchTemplatesByCampaign(data.data[0].id)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching campaigns:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchTemplatesByCampaign = async (campaignId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/phishing-simulation/templates/${campaignId}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setTemplates(data.data)
+        if (data.data.length > 0) {
+          setCurrentTemplate(data.data[0])
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching templates:', error)
+    }
+  }
+
+  const startSimulation = async (template: PhishingTemplate) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/phishing-simulation/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: 'current-user-id', // This should come from auth context
+          campaignId: template.campaignId,
+          templateId: template.id
+        })
+      })
+      
+      const data = await response.json()
+      if (data.success) {
+        setSimulationSession(data.data.id)
+        setCurrentTemplate(template)
+        // Track email opened
+        await trackAction('email_opened')
+      }
+    } catch (error) {
+      console.error('Error starting simulation:', error)
+    }
+  }
+
+  const trackAction = async (actionType: string) => {
+    if (!simulationSession) return
+    
+    try {
+      await fetch(`${API_BASE_URL}/api/phishing-simulation/${simulationSession}/track`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          actionType,
+          ipAddress: '127.0.0.1',
+          userAgent: navigator.userAgent
+        })
+      })
+    } catch (error) {
+      console.error('Error tracking action:', error)
+    }
+  }
+
+  const handleLinkClick = async (linkUrl: string, isMalicious: boolean) => {
     console.log('Link clicked:', linkUrl, 'Malicious:', isMalicious)
     
     setUserActions(prev => ({
       ...prev,
       linksClicked: [...prev.linksClicked, linkUrl]
     }))
+
+    // Track the action
+    await trackAction('link_clicked')
     
     // Always show analysis after clicking a link
     setTimeout(() => {
@@ -230,13 +362,16 @@ export default function PhishingSimulatorPage() {
     }, 1000)
   }
 
-  const handleAttachmentDownload = (filename: string) => {
+  const handleAttachmentDownload = async (filename: string) => {
     console.log('Attachment downloaded:', filename)
     
     setUserActions(prev => ({
       ...prev,
       attachmentsDownloaded: [...prev.attachmentsDownloaded, filename]
     }))
+
+    // Track the action
+    await trackAction('attachment_downloaded')
     
     // Always show analysis after downloading
     setTimeout(() => {
@@ -244,26 +379,32 @@ export default function PhishingSimulatorPage() {
     }, 1000)
   }
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = async () => {
     console.log('Form submitted')
     
     setUserActions(prev => ({
       ...prev,
       formSubmitted: true
     }))
+
+    // Track the action
+    await trackAction('form_submitted')
     
     setTimeout(() => {
       setShowAnalysis(true)
     }, 1000)
   }
 
-  const handleReport = () => {
+  const handleReport = async () => {
     console.log('Phishing reported')
     
     setUserActions(prev => ({
       ...prev,
       reported: true
     }))
+
+    // Track the action
+    await trackAction('reported')
     
     setTimeout(() => {
       setShowAnalysis(true)
@@ -454,6 +595,36 @@ export default function PhishingSimulatorPage() {
     )
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-warm-copper mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading phishing simulations...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!currentTemplate && templates.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">No Active Phishing Simulations</h1>
+            <p className="text-gray-600 mb-8">There are currently no active phishing simulation campaigns.</p>
+            <button
+              onClick={() => router.push('/simulations')}
+              className="bg-warm-copper text-white px-6 py-3 rounded-lg hover:bg-warm-bronze transition-colors"
+            >
+              Back to Simulations
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Header */}
@@ -470,7 +641,7 @@ export default function PhishingSimulatorPage() {
             
             <div className="flex items-center space-x-4">
               <div className="text-sm text-gray-500">
-                Email {currentEmail + 1} of {phishingEmails.length}
+                Template {templates.findIndex(t => t.id === currentTemplate?.id) + 1} of {templates.length}
               </div>
               <div className="flex items-center text-sm text-gray-500">
                 <Clock className="w-4 h-4 mr-1" />
@@ -482,8 +653,40 @@ export default function PhishingSimulatorPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Template Selection */}
+        {templates.length > 0 && (
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Select a Phishing Template</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {templates.map((template) => (
+                <div
+                  key={template.id}
+                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                    currentTemplate?.id === template.id
+                      ? 'border-warm-copper bg-warm-copper/10'
+                      : 'border-gray-200 hover:border-warm-copper/50'
+                  }`}
+                  onClick={() => startSimulation(template)}
+                >
+                  <h3 className="font-semibold text-gray-900 mb-2">{template.subject}</h3>
+                  <p className="text-sm text-gray-600 mb-2">From: {template.senderName}</p>
+                  <p className="text-xs text-gray-500">{template.senderEmail}</p>
+                  <div className="mt-3">
+                    <button
+                      className="w-full bg-warm-copper text-white px-4 py-2 rounded text-sm hover:bg-warm-bronze transition-colors"
+                    >
+                      Start Simulation
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Email Simulator */}
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+        {currentTemplate && (
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
           {/* Email Header */}
           <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
@@ -548,9 +751,10 @@ export default function PhishingSimulatorPage() {
             </div>
           )}
         </div>
+         )}
 
         {/* Instructions */}
-        <div className="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+          <div className="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
           <div className="flex">
             <AlertTriangle className="w-5 h-5 text-yellow-400 mr-3" />
             <div>

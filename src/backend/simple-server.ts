@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import { CourseController } from './controllers/CourseController'
 import { LearningController } from './controllers/LearningController';
 import { PhishingController } from './controllers/PhishingController';
+import { PhishingSimulationController } from './controllers/PhishingSimulationController';
 import { AdminController } from './controllers/AdminController';
 import { ProgressController } from './controllers/ProgressController';
 import { authenticateToken } from './middleware/AuthMiddleware';
@@ -35,6 +36,7 @@ let db: mysql.Connection | null = null;
 const courseController = new CourseController();
 const learningController = new LearningController();
 const phishingController = new PhishingController();
+const phishingSimulationController = new PhishingSimulationController();
 const adminController = new AdminController();
 const progressController = new ProgressController();
 
@@ -308,6 +310,14 @@ app.post('/api/phishing/track/open', (req, res) => phishingController.trackEmail
 app.post('/api/phishing/track/click', (req, res) => phishingController.trackLinkClick(req, res));
 app.get('/api/phishing/campaigns/:campaignId/report', (req, res) => phishingController.generateReport(req, res));
 app.get('/api/phishing/campaigns/:campaignId/results', (req, res) => phishingController.getResultsByCampaign(req, res));
+
+// Phishing Simulation routes
+app.post('/api/phishing-simulation/start', (req, res) => phishingSimulationController.startSimulation(req, res));
+app.put('/api/phishing-simulation/:sessionId', (req, res) => phishingSimulationController.updateSimulation(req, res));
+app.get('/api/phishing-simulation/:sessionId', (req, res) => phishingSimulationController.getSimulation(req, res));
+app.get('/api/phishing-simulation/campaigns/active', (req, res) => phishingSimulationController.getActiveCampaigns(req, res));
+app.get('/api/phishing-simulation/templates/:campaignId', (req, res) => phishingSimulationController.getTemplatesByCampaign(req, res));
+app.post('/api/phishing-simulation/:sessionId/track', (req, res) => phishingSimulationController.trackAction(req, res));
 
 // Admin routes (temporarily without auth for testing)
 app.get('/api/admin/dashboard/metrics', (req, res) => adminController.getDashboardMetrics(req, res));
