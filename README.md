@@ -44,3 +44,4 @@ Platforma funcționează ca un hub central care gestionează toate componentele 
 ## Licență
 
 Proprietar - S.C. ITC GLOBAL DIGITAL CONCEPT S.R.L.
+# Railway deployment trigger
