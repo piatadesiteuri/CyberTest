@@ -1,0 +1,7 @@
+DIRECT RAILWAY TEST: Force start command override
+
+Instead of relying on config files, let's override directly:
+1. Change Dockerfile.backend to use npm run railway:backend  
+2. This ensures exact same command as package.json
+3. Test if this fixes the routing issue
+Mon Sep 22 22:39:26 EEST 2025
