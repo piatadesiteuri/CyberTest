@@ -168,7 +168,7 @@ export default function UserDashboard() {
         </div>
 
         {/* Unified Learning Progress & Path Overview */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-12 border border-gray-100">
+        <div className="bg-gradient-to-br from-harmony-cream/80 via-harmony-tan/60 to-warm-gold/40 rounded-2xl shadow-xl p-8 mb-12 border border-warm-gold/30">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-gradient-to-br from-harmony-dark to-harmony-tan rounded-full flex items-center justify-center">
@@ -244,7 +244,7 @@ export default function UserDashboard() {
             {/* Level-based Progress Breakdown */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Foundation Level */}
-              <div className="bg-gradient-to-br from-warm-gold/10 to-warm-gold/20 rounded-xl p-6 border border-warm-gold/30">
+              <div className="bg-gradient-to-br from-warm-gold/30 to-warm-bronze/20 rounded-xl p-6 border border-warm-gold/50 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-warm-gold rounded-full flex items-center justify-center">
@@ -285,7 +285,7 @@ export default function UserDashboard() {
               </div>
 
               {/* Advanced Level */}
-              <div className="bg-gradient-to-br from-harmony-dark/10 to-harmony-dark/20 rounded-xl p-6 border border-harmony-dark/30">
+              <div className="bg-gradient-to-br from-harmony-dark/25 to-harmony-tan/20 rounded-xl p-6 border border-harmony-dark/50 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-harmony-dark rounded-full flex items-center justify-center">
@@ -311,7 +311,7 @@ export default function UserDashboard() {
               </div>
 
               {/* Overall Stats */}
-              <div className="bg-gradient-to-br from-harmony-tan/10 to-harmony-tan/20 rounded-xl p-6 border border-harmony-tan/30">
+              <div className="bg-gradient-to-br from-warm-copper/25 to-warm-bronze/20 rounded-xl p-6 border border-warm-copper/50 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <Trophy className="w-6 h-6 text-harmony-tan" />
@@ -340,7 +340,7 @@ export default function UserDashboard() {
             </div>
 
             {/* Learning Journey Status */}
-            <div className="bg-gradient-to-r from-harmony-cream/50 to-harmony-tan/50 rounded-xl p-4 border border-harmony-tan/30">
+            <div className="bg-gradient-to-r from-warm-gold/20 to-warm-bronze/15 rounded-xl p-4 border border-warm-gold/40 shadow-md">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Target className="w-5 h-5 text-harmony-dark" />
@@ -385,7 +385,7 @@ export default function UserDashboard() {
                 const isLocked = course.level !== 'foundation'
                 
                 return (
-                  <div key={course.id} className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 hover:shadow-xl transition-shadow">
+                  <div key={course.id} className="bg-gradient-to-br from-white/90 to-harmony-cream/30 rounded-2xl shadow-lg p-8 border border-warm-gold/20 hover:shadow-xl hover:from-white hover:to-harmony-tan/40 transition-all duration-300">
                     <div className="flex items-center justify-between mb-6">
                       <div className="w-12 h-12 bg-gradient-to-br from-warm-copper to-warm-bronze rounded-xl flex items-center justify-center">
                         {getCourseIcon(course.level)}
