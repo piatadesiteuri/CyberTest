@@ -163,14 +163,26 @@ export default function CoursePage() {
                   console.log('🎯 Completed quiz IDs:', completedQuizIds)
                   setCompletedQuizzes(completedQuizIds)
                   
-                  // Store quiz attempts for detailed info
+                  // Store quiz attempts for detailed info (only the most recent attempt for each quiz)
                   const attemptsMap = new Map<string, any>()
+                  const quizAttemptsByQuiz = new Map<string, any>()
+                  
+                  // Group attempts by quiz ID and keep only the most recent one
                   completedData.completedQuizzes.forEach((quiz: any) => {
                     const quizId = quiz.quizId || quiz.quiz?.id
                     if (quizId) {
-                      attemptsMap.set(quizId, quiz)
+                      const existingAttempt = quizAttemptsByQuiz.get(quizId)
+                      if (!existingAttempt || new Date(quiz.completedAt) > new Date(existingAttempt.completedAt)) {
+                        quizAttemptsByQuiz.set(quizId, quiz)
+                      }
                     }
                   })
+                  
+                  // Convert to Map for quizAttempts
+                  quizAttemptsByQuiz.forEach((quiz, quizId) => {
+                    attemptsMap.set(quizId, quiz)
+                  })
+                  
                   setQuizAttempts(attemptsMap)
                 }
               }
