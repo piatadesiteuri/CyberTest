@@ -16,7 +16,7 @@ import { jwtConfig } from '../config/database';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || process.env.RAILWAY_PORT || 3001;
 
 // JWT Configuration from config file
 const JWT_SECRET = jwtConfig.secret;
@@ -386,6 +386,8 @@ const startServer = async () => {
   console.log('🔄 Starting server...');
   console.log('🔧 Environment variables:');
   console.log('  - PORT:', process.env.PORT);
+  console.log('  - RAILWAY_PORT:', process.env.RAILWAY_PORT);
+  console.log('  - Final PORT:', PORT);
   console.log('  - NODE_ENV:', process.env.NODE_ENV);
   console.log('  - DB_HOST:', process.env.DB_HOST);
   console.log('  - DB_NAME:', process.env.DB_NAME);
@@ -393,11 +395,19 @@ const startServer = async () => {
   
   await connectDB();
   
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Backend server running on port ${PORT}`);
     console.log(`📊 Health check: http://0.0.0.0:${PORT}/health`);
     console.log(`🗄️  Database: ${db ? 'Connected' : 'Not connected'}`);
     console.log('✅ Server started successfully!');
+  });
+
+  // Handle server errors
+  server.on('error', (error: any) => {
+    console.error('❌ Server error:', error);
+    if (error.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${PORT} is already in use`);
+    }
   });
 };
 
