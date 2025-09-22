@@ -181,11 +181,10 @@ export class ProgressService {
     const totalLessons = (courseStatsRows as {totalLessons: number}[])[0]?.totalLessons || 0;
     const totalModules = (courseStatsRows as {totalModules: number}[])[0]?.totalModules || 0;
 
-    // Get user's completed lessons and modules for the course
+    // Get user's completed lessons for the course
     const [userProgressRows] = await db.execute(
       `SELECT 
          COUNT(DISTINCT up.lesson_id) as completedLessons,
-         COUNT(DISTINCT up.module_id) as completedModules,
          MAX(up.updated_at) as lastActivity
        FROM user_progress up
        WHERE up.user_id = ? AND up.course_id = ? AND up.status = 'completed' AND up.lesson_id IS NOT NULL`,
@@ -193,8 +192,27 @@ export class ProgressService {
     );
 
     const completedLessons = (userProgressRows as {completedLessons: number}[])[0]?.completedLessons || 0;
-    const completedModules = (userProgressRows as {completedModules: number}[])[0]?.completedModules || 0;
     const lastActivity = (userProgressRows as {lastActivity: Date}[])[0]?.lastActivity || null;
+
+    // Calculate completed modules - a module is completed only when ALL lessons and quizzes are completed
+    const [completedModulesRows] = await db.execute(
+      `SELECT m.id as module_id,
+         COUNT(DISTINCT l.id) as total_lessons,
+         COUNT(DISTINCT q.id) as total_quizzes,
+         COUNT(DISTINCT CASE WHEN up_lessons.status = 'completed' THEN up_lessons.lesson_id END) as completed_lessons,
+         COUNT(DISTINCT CASE WHEN up_quizzes.status = 'completed' THEN up_quizzes.quiz_id END) as completed_quizzes
+       FROM modules m
+       LEFT JOIN lessons l ON m.id = l.module_id
+       LEFT JOIN quizzes q ON m.id = q.module_id
+       LEFT JOIN user_progress up_lessons ON up_lessons.lesson_id = l.id AND up_lessons.user_id = ? AND up_lessons.course_id = ?
+       LEFT JOIN user_progress up_quizzes ON up_quizzes.quiz_id = q.id AND up_quizzes.user_id = ? AND up_quizzes.course_id = ?
+       WHERE m.course_id = ?
+       GROUP BY m.id
+       HAVING completed_lessons = total_lessons AND completed_quizzes = total_quizzes`,
+      [userId, courseId, userId, courseId, courseId]
+    );
+
+    const completedModules = (completedModulesRows as any[]).length;
 
     const overallProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
