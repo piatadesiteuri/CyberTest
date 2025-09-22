@@ -91,8 +91,8 @@ class UserDashboardService {
         overallProgress: progressData.data?.completedCourses > 0 ? 100 : 0, // Simplified for now
         completedLessons: progressData.data?.completedLessons || 0,
         totalLessons: progressData.data?.completedLessons || 0, // Will be updated when we have total lessons
-        completedModules: progressData.data?.completedCourses || 0, // 1 completed course
-        totalModules: 4, // We know there are 4 modules in the course
+        completedModules: 0, // Will be calculated per course
+        totalModules: 0, // Will be calculated per course
         completedQuizzes,
         recentActivity,
         totalTimeSpent: totalTimeSpent, // Use calculated time from quiz attempts

@@ -134,21 +134,12 @@ export default function UserDashboard() {
   }
 
   const getModuleProgress = (course: Course) => {
-    // For foundation course, use dashboardData if available
-    if (course.level === 'foundation' && dashboardData) {
-      return { 
-        completed: dashboardData.completedModules, 
-        total: dashboardData.totalModules, 
-        percentage: dashboardData.totalModules > 0 ? Math.round((dashboardData.completedModules / dashboardData.totalModules) * 100) : 0 
-      }
-    }
-    
-    // For other courses, use course.userProgress or default
+    // Use course.userProgress for all courses (this comes from the backend with correct calculation)
     if (!course.userProgress) {
       return { completed: 0, total: course.modules?.length || 0, percentage: 0 }
     }
     
-    const totalModules = course.modules?.length || 0
+    const totalModules = course.userProgress.totalModules || 0
     const completedModules = course.userProgress.completedModules || 0
     const percentage = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0
     
