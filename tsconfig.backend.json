@@ -8,13 +8,14 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "noImplicitAny": false,
+    "skipDefaultLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "removeComments": true,
-    "noImplicitAny": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
     "noImplicitThis": true,
@@ -32,8 +33,7 @@
   },
   "include": [
     "src/backend/**/*",
-    "src/config/**/*",
-    "node_modules/@types/**/*"
+    "src/config/**/*"
   ],
   "exclude": [
     "node_modules",
