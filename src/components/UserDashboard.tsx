@@ -167,7 +167,7 @@ export default function UserDashboard() {
           </p>
         </div>
 
-        {/* Unified Learning Progress Overview */}
+        {/* Unified Learning Progress & Path Overview */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-12 border border-gray-100">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">
@@ -181,7 +181,17 @@ export default function UserDashboard() {
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-harmony-dark">
-                {dashboardData ? `${dashboardData.overallProgress}%` : '0%'}
+                {(() => {
+                  const totalModules = courses.reduce((acc, course) => {
+                    const progress = course.userProgress;
+                    return acc + (progress ? progress.totalModules : 0);
+                  }, 0);
+                  const completedModules = courses.reduce((acc, course) => {
+                    const progress = course.userProgress;
+                    return acc + (progress ? progress.completedModules : 0);
+                  }, 0);
+                  return totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
+                })()}%
               </div>
               <div className="text-gray-600">Overall Progress</div>
             </div>
@@ -194,14 +204,36 @@ export default function UserDashboard() {
               <div className="w-full bg-gray-200 rounded-full h-8 overflow-hidden">
                 <div 
                   className="bg-gradient-to-r from-harmony-dark via-harmony-tan to-warm-gold h-8 rounded-full transition-all duration-1000 ease-out relative" 
-                  style={{width: `${dashboardData?.overallProgress || 0}%`}}
+                  style={{
+                    width: `${(() => {
+                      const totalModules = courses.reduce((acc, course) => {
+                        const progress = course.userProgress;
+                        return acc + (progress ? progress.totalModules : 0);
+                      }, 0);
+                      const completedModules = courses.reduce((acc, course) => {
+                        const progress = course.userProgress;
+                        return acc + (progress ? progress.completedModules : 0);
+                      }, 0);
+                      return totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
+                    })()}%`
+                  }}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-pulse"></div>
                 </div>
               </div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-lg font-bold text-white drop-shadow-lg">
-                  {dashboardData?.overallProgress || 0}% Complete
+                  {(() => {
+                    const totalModules = courses.reduce((acc, course) => {
+                      const progress = course.userProgress;
+                      return acc + (progress ? progress.totalModules : 0);
+                    }, 0);
+                    const completedModules = courses.reduce((acc, course) => {
+                      const progress = course.userProgress;
+                      return acc + (progress ? progress.completedModules : 0);
+                    }, 0);
+                    return totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
+                  })()}% Complete
                 </span>
               </div>
             </div>
@@ -226,10 +258,7 @@ export default function UserDashboard() {
                       {courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
                         const progress = course.userProgress;
                         return acc + (progress ? progress.completedModules : 0);
-                      }, 0)}/{courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
-                        const progress = course.userProgress;
-                        return acc + (progress ? progress.totalModules : 0);
-                      }, 0)}
+                      }, 0)}/5
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
@@ -237,15 +266,11 @@ export default function UserDashboard() {
                       className="bg-warm-gold h-2 rounded-full transition-all duration-500"
                       style={{
                         width: `${(() => {
-                          const total = courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
-                            const progress = course.userProgress;
-                            return acc + (progress ? progress.totalModules : 0);
-                          }, 0);
                           const completed = courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
                             const progress = course.userProgress;
                             return acc + (progress ? progress.completedModules : 0);
                           }, 0);
-                          return total > 0 ? (completed / total) * 100 : 0;
+                          return (completed / 5) * 100;
                         })()}%`
                       }}
                     ></div>
@@ -270,37 +295,15 @@ export default function UserDashboard() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Modules</span>
-                    <span className="font-semibold text-harmony-dark">
-                      {courses.filter(c => c.level === 'advanced').reduce((acc, course) => {
-                        const progress = course.userProgress;
-                        return acc + (progress ? progress.completedModules : 0);
-                      }, 0)}/{courses.filter(c => c.level === 'advanced').reduce((acc, course) => {
-                        const progress = course.userProgress;
-                        return acc + (progress ? progress.totalModules : 0);
-                      }, 0)}
-                    </span>
+                    <span className="font-semibold text-harmony-dark">0/7</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
                       className="bg-harmony-dark h-2 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${(() => {
-                          const total = courses.filter(c => c.level === 'advanced').reduce((acc, course) => {
-                            const progress = course.userProgress;
-                            return acc + (progress ? progress.totalModules : 0);
-                          }, 0);
-                          const completed = courses.filter(c => c.level === 'advanced').reduce((acc, course) => {
-                            const progress = course.userProgress;
-                            return acc + (progress ? progress.completedModules : 0);
-                          }, 0);
-                          return total > 0 ? (completed / total) * 100 : 0;
-                        })()}%`
-                      }}
+                      style={{width: '0%'}}
                     ></div>
                   </div>
-                  <div className="text-xs text-gray-500">
-                    {courses.filter(c => c.level === 'advanced').length} courses available
-                  </div>
+                  <div className="text-xs text-gray-500">7 available</div>
                 </div>
               </div>
 
@@ -341,21 +344,30 @@ export default function UserDashboard() {
                   <span className="text-sm font-medium text-harmony-dark">Learning Journey Status</span>
                 </div>
                 <div className="text-sm text-gray-600">
-                  {!dashboardData || dashboardData.completedModules === 0 ? 'Getting Started' : 
-                   dashboardData.completedModules === dashboardData.totalModules ? 'All Modules Complete!' :
-                   `${dashboardData.totalModules - dashboardData.completedModules} modules remaining`}
+                  {(() => {
+                    const totalModules = courses.reduce((acc, course) => {
+                      const progress = course.userProgress;
+                      return acc + (progress ? progress.totalModules : 0);
+                    }, 0);
+                    const completedModules = courses.reduce((acc, course) => {
+                      const progress = course.userProgress;
+                      return acc + (progress ? progress.completedModules : 0);
+                    }, 0);
+                    return completedModules === 0 ? 'Getting Started' : 
+                           completedModules === totalModules ? 'All Modules Complete!' :
+                           `${totalModules - completedModules} modules remaining`;
+                  })()}
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Learning Paths Section */}
-        <div className="mb-16">
-          <h2 className="text-3xl font-bold text-center text-harmony-dark mb-4">Choose Your Learning Path</h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            Select a specialized track based on your role and experience level. Each path is designed to build practical cybersecurity skills.
-          </p>
+          {/* Learning Paths Section */}
+          <div className="mt-12 pt-8 border-t border-gray-200">
+            <h2 className="text-3xl font-bold text-center text-harmony-dark mb-4">Choose Your Learning Path</h2>
+            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+              Select a specialized track based on your role and experience level. Each path is designed to build practical cybersecurity skills.
+            </p>
 
           {loading ? (
             <div className="text-center py-12">
@@ -500,6 +512,7 @@ export default function UserDashboard() {
               })}
             </div>
           )}
+          </div>
         </div>
 
         {/* Achievements & Gamification */}
