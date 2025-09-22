@@ -1,7 +1,7 @@
 import mysql from 'mysql2/promise'
 import dotenv from 'dotenv'
+import { v4 as uuidv4 } from 'uuid'
 import { PhishingCampaign, PhishingTemplate, PhishingResult, PhishingReport } from '../entities/PhishingCampaign'
-const { v4: uuidv4 } = require('uuid')
 
 dotenv.config();
 
