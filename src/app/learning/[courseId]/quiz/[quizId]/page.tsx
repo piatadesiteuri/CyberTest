@@ -87,7 +87,7 @@ export default function QuizPage() {
       }
       
       try {
-        const response = await fetch(`http://localhost:3001/api/progress/quiz/${quizId}/unlock`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'}/api/progress/quiz/${quizId}/unlock`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -116,7 +116,7 @@ export default function QuizPage() {
         console.log('🔑 Token for review mode:', token ? 'Present' : 'Missing');
         if (!token) return;
         
-        const response = await fetch(`http://localhost:3001/api/progress/quiz-attempts`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'}/api/progress/quiz-attempts`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -153,7 +153,7 @@ export default function QuizPage() {
     const fetchQuiz = async () => {
       try {
         console.log('🎯 Fetching quiz with ID:', quizId);
-        const response = await fetch(`http://localhost:3001/api/courses/${courseId}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'}/api/courses/${courseId}`);
         const data = await response.json();
         
         if (data.success && data.course) {

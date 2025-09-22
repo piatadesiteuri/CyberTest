@@ -139,7 +139,7 @@ export default function CoursePage() {
 
             // Fetch completed quizzes and attempts
             try {
-              const completedQuizzesResponse = await fetch('http://localhost:3001/api/progress/completed-quizzes', {
+              const completedQuizzesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'}/api/progress/completed-quizzes`, {
                 headers: {
                   'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
                   'Content-Type': 'application/json'
@@ -215,7 +215,7 @@ export default function CoursePage() {
             const token = localStorage.getItem('token')
             if (token) {
               try {
-                const quizzesResponse = await fetch(`http://localhost:3001/api/progress/course/${courseId}/quizzes`, {
+                const quizzesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'}/api/progress/course/${courseId}/quizzes`, {
                   headers: {
                     'Authorization': `Bearer ${token}`
                   }

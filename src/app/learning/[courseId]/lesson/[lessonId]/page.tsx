@@ -51,7 +51,7 @@ export default function LessonPage() {
         console.log('🔍 Fetching lesson with ID:', lessonId, 'from course:', courseId)
         
         // First, get the course data to find the lesson
-        const courseResponse = await fetch(`http://localhost:3001/api/courses/${courseId}`)
+        const courseResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'}/api/courses/${courseId}`)
         if (!courseResponse.ok) {
           throw new Error('Failed to fetch course')
         }
