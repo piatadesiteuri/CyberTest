@@ -1,0 +1,15 @@
+FORCE RAILWAY EDGE CACHE CLEAR: Backend healthcheck succeeds but Edge returns 502
+
+This suggests Railway Edge is caching the 502 response
+or there's a routing issue between Edge and backend container
+
+Need to:
+1. Force complete redeploy of backend
+2. Wait for Railway Edge cache to clear
+3. Verify external routing works
+
+Backend logs show all green:
+✅ Healthcheck succeeded
+✅ Server on port 8080 
+✅ Database connected
+Mon Sep 22 22:37:39 EEST 2025
