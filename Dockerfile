@@ -7,28 +7,36 @@ WORKDIR /app
 COPY package*.json ./
 COPY next.config.js ./
 COPY tsconfig.json ./
+COPY tsconfig.backend.json ./
 COPY tailwind.config.js ./
 COPY postcss.config.js ./
 
-# Install dependencies
+# Install all dependencies
 RUN npm ci
+
+# Install TypeScript globally
+RUN npm install -g typescript ts-node
 
 # Copy source code
 COPY src/ ./src/
-COPY public/ ./public/ 2>/dev/null || true
+COPY .env.railway ./.env
 
-# Set environment variable for API URL
-ENV NEXT_PUBLIC_API_URL=https://secure-appreciation-production.up.railway.app/api
+# Create public directory if needed
+RUN mkdir -p public
 
-# Build the application
+# Build the Next.js frontend
 RUN npm run build
 
-# Expose port
+# Expose port 
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000 || exit 1
+# Environment variables
+ENV NODE_ENV=production
+ENV NEXT_PUBLIC_API_URL=/api
 
-# Start the application
-CMD ["npm", "start"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Start only the backend server (which now serves both API and frontend)
+CMD ["ts-node", "--project", "tsconfig.backend.json", "src/backend/simple-server.ts"]
