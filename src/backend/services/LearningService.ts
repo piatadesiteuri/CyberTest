@@ -99,10 +99,25 @@ export class LearningService {
           const [enrolledResults] = await this.db.getPool().execute(enrolledQuery, [course.id]) as [any[], any];
           const enrolledUsers = enrolledResults[0]?.count || 0;
           
-          // Get completed users count
-          const completedQuery = 'SELECT COUNT(DISTINCT user_id) as count FROM user_progress WHERE course_id = ? AND progress_percentage = 100';
-          const [completedResults] = await this.db.getPool().execute(completedQuery, [course.id]) as [any[], any];
-          const completedUsers = completedResults[0]?.count || 0;
+          // Get completed users count (users who have completed all lessons in the course)
+          const completedQuery = `
+            SELECT COUNT(DISTINCT up.user_id) as count 
+            FROM user_progress up
+            JOIN lessons l ON up.lesson_id = l.id
+            JOIN modules m ON l.module_id = m.id
+            WHERE m.course_id = ? AND up.status = 'completed'
+            GROUP BY up.user_id
+            HAVING COUNT(DISTINCT l.id) = (
+              SELECT COUNT(DISTINCT l2.id) 
+              FROM lessons l2
+              JOIN modules m2 ON l2.module_id = m2.id
+              WHERE m2.course_id = ?
+            )
+          `;
+          const [completedResults] = await this.db.getPool().execute(completedQuery, [course.id, course.id]) as [any[], any];
+          const completedUsers = completedResults.length || 0;
+          
+          console.log(`Course ${course.id}: enrolledUsers=${enrolledUsers}, completedUsers=${completedUsers}, completedResults=`, completedResults);
           
           // Calculate completion rate
           const completionRate = enrolledUsers > 0 ? Math.round((completedUsers / enrolledUsers) * 100) : 0;
