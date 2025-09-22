@@ -12,6 +12,13 @@ export interface Course {
   createdAt: string
   updatedAt: string
   modules?: Module[]
+  userProgress?: {
+    progressPercentage: number
+    completedModules: number
+    totalModules: number
+    completedLessons: number
+    totalLessons: number
+  }
 }
 
 export interface Module {

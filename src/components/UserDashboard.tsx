@@ -13,6 +13,7 @@ import ThreatDetection from './icons/ThreatDetection'
 import CyberTraining from './icons/CyberTraining'
 import { courseService } from '@/services/courseService'
 import { progressService } from '@/services/progressService'
+import { userDashboardService, UserDashboardData } from '@/services/userDashboardService'
 import { Course } from '@/types/course'
 
 export default function UserDashboard() {
@@ -20,11 +21,16 @@ export default function UserDashboard() {
   const router = useRouter()
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
+  const [dashboardData, setDashboardData] = useState<UserDashboardData | null>(null)
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchData = async () => {
       try {
-        const coursesData = await courseService.getCourses()
+        // Fetch courses and dashboard data in parallel
+        const [coursesData, dashboardData] = await Promise.all([
+          courseService.getCourses(),
+          userDashboardService.getUserDashboardData()
+        ])
         
         // Fetch progress for each course
         const coursesWithProgress = await Promise.all(
@@ -43,14 +49,15 @@ export default function UserDashboard() {
         )
         
         setCourses(coursesWithProgress)
+        setDashboardData(dashboardData)
       } catch (error) {
-        console.error('Error fetching courses:', error)
+        console.error('Error fetching data:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchCourses()
+    fetchData()
   }, [])
 
   const handleCourseClick = (courseId: string) => {
@@ -87,6 +94,18 @@ export default function UserDashboard() {
     }
   }
 
+  const getModuleProgress = (course: Course) => {
+    if (!course.userProgress) {
+      return { completed: 0, total: course.modules?.length || 0, percentage: 0 }
+    }
+    
+    const totalModules = course.modules?.length || 0
+    const completedModules = course.userProgress.completedModules || 0
+    const percentage = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0
+    
+    return { completed: completedModules, total: totalModules, percentage }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-harmony-cream via-white to-harmony-tan">
       {/* Header */}
@@ -121,18 +140,27 @@ export default function UserDashboard() {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-harmony-dark">87%</div>
+              <div className="text-3xl font-bold text-harmony-dark">
+                {dashboardData ? `${dashboardData.overallProgress}%` : '0%'}
+              </div>
               <div className="text-gray-600">Overall Progress</div>
             </div>
           </div>
 
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
-            <div className="bg-gradient-to-r from-harmony-dark to-green-600 h-4 rounded-full" style={{width: '87%'}}></div>
+            <div 
+              className="bg-gradient-to-r from-harmony-dark to-green-600 h-4 rounded-full transition-all duration-500" 
+              style={{width: `${dashboardData?.overallProgress || 0}%`}}
+            ></div>
           </div>
           <div className="flex justify-between text-sm text-gray-600">
-            <span>8 of 12 modules completed</span>
-            <span>4 modules remaining</span>
+            <span>
+              {dashboardData ? `${dashboardData.completedModules} of ${dashboardData.totalModules} modules completed` : '0 of 0 modules completed'}
+            </span>
+            <span>
+              {dashboardData ? `${dashboardData.totalModules - dashboardData.completedModules} modules remaining` : '0 modules remaining'}
+            </span>
           </div>
         </div>
 
@@ -163,7 +191,10 @@ export default function UserDashboard() {
                       <div className="text-right">
                         <div className="text-sm text-gray-500 uppercase">{course.level}</div>
                         <div className="text-2xl font-bold text-gray-900">
-                          {course.modules?.length || 0} Modules
+                          {getModuleProgress(course).completed}/{getModuleProgress(course).total} Modules
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {getModuleProgress(course).percentage}% Complete
                         </div>
                       </div>
                     </div>
@@ -213,58 +244,76 @@ export default function UserDashboard() {
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-12 border border-gray-100">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Current Learning Progress</h2>
           
-          <div className="space-y-6">
-            {/* Module 1 */}
-            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-warm-copper/10 to-warm-copper/20 rounded-xl border border-warm-copper/30">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-warm-copper rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Introduction to Cybersecurity</h3>
-                  <p className="text-gray-600 text-sm">Understanding threats and security fundamentals</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-warm-copper font-semibold">Completed</div>
-                <div className="text-sm text-gray-500">100%</div>
-              </div>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-harmony-dark mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading progress...</p>
             </div>
-
-            {/* Module 2 */}
-            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-warm-amber/10 to-warm-amber/20 rounded-xl border border-warm-amber/30">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-warm-amber rounded-full flex items-center justify-center">
-                  <PhishingHook className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Phishing Awareness & Prevention</h3>
-                  <p className="text-gray-600 text-sm">Recognizing and avoiding phishing attacks</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-warm-amber font-semibold">In Progress</div>
-                <div className="text-sm text-gray-500">65%</div>
-              </div>
+          ) : (
+            <div className="space-y-6">
+              {courses.map((course, index) => {
+                const progress = getModuleProgress(course)
+                const isCompleted = progress.percentage === 100
+                const isInProgress = progress.percentage > 0 && progress.percentage < 100
+                const isLocked = progress.percentage === 0 && index > 0
+                
+                const getStatusColor = () => {
+                  if (isCompleted) return 'warm-copper'
+                  if (isInProgress) return 'warm-amber'
+                  if (isLocked) return 'warm-brass'
+                  return 'gray-400'
+                }
+                
+                const getStatusText = () => {
+                  if (isCompleted) return 'Completed'
+                  if (isInProgress) return 'In Progress'
+                  if (isLocked) return 'Locked'
+                  return 'Not Started'
+                }
+                
+                const getStatusSubtext = () => {
+                  if (isCompleted) return '100%'
+                  if (isInProgress) return `${progress.percentage}%`
+                  if (isLocked) return 'Complete previous course'
+                  return 'Start learning'
+                }
+                
+                const colorClass = getStatusColor()
+                
+                return (
+                  <div 
+                    key={course.id}
+                    className={`flex items-center justify-between p-6 bg-gradient-to-r from-${colorClass}/10 to-${colorClass}/20 rounded-xl border border-${colorClass}/30`}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-12 h-12 bg-${colorClass} rounded-full flex items-center justify-center`}>
+                        {isCompleted ? (
+                          <CheckCircle className="w-6 h-6 text-white" />
+                        ) : isInProgress ? (
+                          <Play className="w-6 h-6 text-white" />
+                        ) : isLocked ? (
+                          <Lock className="w-6 h-6 text-white" />
+                        ) : (
+                          <BookOpen className="w-6 h-6 text-white" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{course.title}</h3>
+                        <p className="text-gray-600 text-sm">{course.description}</p>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {progress.completed}/{progress.total} modules • {course.estimatedDuration} min
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-${colorClass} font-semibold`}>{getStatusText()}</div>
+                      <div className="text-sm text-gray-500">{getStatusSubtext()}</div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-
-            {/* Module 3 */}
-            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-warm-brass/10 to-warm-brass/20 rounded-xl border border-warm-brass/30">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-warm-brass rounded-full flex items-center justify-center">
-                  <SecurityLock className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Password Security & MFA</h3>
-                  <p className="text-gray-600 text-sm">Creating strong passwords and using multi-factor authentication</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-warm-brass font-semibold">Locked</div>
-                <div className="text-sm text-gray-500">Complete previous module</div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Achievements & Gamification */}
@@ -273,71 +322,84 @@ export default function UserDashboard() {
           <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Achievements</h2>
             <div className="space-y-4">
-              <div className="flex items-center space-x-4 p-4 bg-warm-gold/10 rounded-lg border border-warm-gold/30">
-                <Trophy className="w-8 h-8 text-warm-gold" />
-                <div>
-                  <h3 className="font-semibold text-gray-900">First Quiz Master</h3>
-                  <p className="text-gray-600 text-sm">Scored 100% on your first security quiz</p>
+              {dashboardData?.completedQuizzes && dashboardData.completedQuizzes.length > 0 ? (
+                dashboardData.completedQuizzes.slice(0, 3).map((quiz, index) => (
+                  <div key={quiz.id} className="flex items-center space-x-4 p-4 bg-warm-gold/10 rounded-lg border border-warm-gold/30">
+                    <Trophy className="w-8 h-8 text-warm-gold" />
+                    <div>
+                      <h3 className="font-semibold text-gray-900">
+                        {quiz.score === 100 ? 'Perfect Score!' : 'Quiz Completed'}
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        {quiz.quiz?.title || 'Security Quiz'} - {quiz.score}% score
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(quiz.completedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Complete your first quiz to unlock achievements!</p>
                 </div>
-              </div>
-              <div className="flex items-center space-x-4 p-4 bg-warm-honey/10 rounded-lg border border-warm-honey/30">
-                <Star className="w-8 h-8 text-warm-honey" />
-                <div>
-                  <h3 className="font-semibold text-gray-900">Consistent Learner</h3>
-                  <p className="text-gray-600 text-sm">Completed 5 consecutive days of training</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4 p-4 bg-warm-sunset/10 rounded-lg border border-warm-sunset/30">
-                <Zap className="w-8 h-8 text-warm-sunset" />
-                <div>
-                  <h3 className="font-semibold text-gray-900">Quick Learner</h3>
-                  <p className="text-gray-600 text-sm">Finished a module in record time</p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Leaderboard */}
+          {/* Learning Stats */}
           <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Department Leaderboard</h2>
-            <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Learning Stats</h2>
+            <div className="space-y-6">
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-warm-gold/10 to-warm-gold/20 rounded-lg border border-warm-gold/30">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-warm-gold rounded-full flex items-center justify-center text-white font-bold">1</div>
+                  <div className="w-8 h-8 bg-warm-gold rounded-full flex items-center justify-center">
+                    <Trophy className="w-5 h-5 text-white" />
+                  </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Sarah Johnson</h3>
-                    <p className="text-gray-600 text-sm">IT Department</p>
+                    <h3 className="font-semibold text-gray-900">Average Score</h3>
+                    <p className="text-gray-600 text-sm">Across all quizzes</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-warm-gold">2,450</div>
-                  <div className="text-sm text-gray-500">points</div>
+                  <div className="text-2xl font-bold text-warm-gold">
+                    {dashboardData?.averageScore || 0}%
+                  </div>
                 </div>
               </div>
+              
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-warm-brass/10 to-warm-brass/20 rounded-lg border border-warm-brass/30">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-warm-brass rounded-full flex items-center justify-center text-white font-bold">2</div>
+                  <div className="w-8 h-8 bg-warm-brass rounded-full flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-white" />
+                  </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Mike Chen</h3>
-                    <p className="text-gray-600 text-sm">Finance Department</p>
+                    <h3 className="font-semibold text-gray-900">Time Spent</h3>
+                    <p className="text-gray-600 text-sm">Total learning time</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-warm-brass">2,180</div>
-                  <div className="text-sm text-gray-500">points</div>
+                  <div className="text-2xl font-bold text-warm-brass">
+                    {dashboardData ? Math.round(dashboardData.totalTimeSpent / 60) : 0}m
+                  </div>
                 </div>
               </div>
+              
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-warm-bronze/10 to-warm-bronze/20 rounded-lg border border-warm-bronze/30">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-warm-bronze rounded-full flex items-center justify-center text-white font-bold">3</div>
+                  <div className="w-8 h-8 bg-warm-bronze rounded-full flex items-center justify-center">
+                    <Target className="w-5 h-5 text-white" />
+                  </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">You</h3>
-                    <p className="text-gray-600 text-sm">{user?.department} Department</p>
+                    <h3 className="font-semibold text-gray-900">Quizzes Completed</h3>
+                    <p className="text-gray-600 text-sm">Total attempts</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-warm-bronze">1,920</div>
-                  <div className="text-sm text-gray-500">points</div>
+                  <div className="text-2xl font-bold text-warm-bronze">
+                    {dashboardData?.completedQuizzes?.length || 0}
+                  </div>
                 </div>
               </div>
             </div>
