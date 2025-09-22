@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import path from 'path';
+// import path from 'path'; // Not needed for backend-only
 import { CourseController } from './controllers/CourseController'
 import { LearningController } from './controllers/LearningController';
 import { PhishingController } from './controllers/PhishingController';
@@ -388,34 +388,8 @@ app.get('/api/progress/quiz-attempts', authenticateToken, (req: Request, res: Re
 app.get('/api/progress/completed-quizzes', authenticateToken, (req: Request, res: Response) => progressController.getUserCompletedQuizzes(req, res));
 app.post('/api/progress/quiz-attempt', authenticateToken, (req: Request, res: Response) => progressController.createQuizAttempt(req, res));
 
-// Serve static files from Next.js build (only in production)
-if (NODE_ENV === 'production') {
-  console.log('🌐 Setting up static file serving for frontend...');
-  
-  // Serve static assets
-  app.use('/_next', express.static(path.join(__dirname, '../../.next')));
-  app.use('/static', express.static(path.join(__dirname, '../../.next/static')));
-  app.use(express.static(path.join(__dirname, '../../public')));
-  
-  // Serve Next.js pages - catch all non-API routes
-  app.get('/(.*)', (req: Request, res: Response): void => {
-    // Don't serve static files for API routes
-    if (req.path.startsWith('/api')) {
-      res.status(404).json({ error: 'API endpoint not found' });
-      return;
-    }
-    
-    // Serve the main Next.js page
-    res.sendFile(path.join(__dirname, '../../.next/server/pages/index.html'), (err) => {
-      if (err) {
-        console.error('Error serving frontend:', err);
-        res.status(500).send('Error loading page');
-      }
-    });
-  });
-  
-  console.log('✅ Frontend static serving configured');
-}
+// Backend only - no frontend serving
+console.log('🔧 Backend-only mode - frontend served separately');
 
 // Start server
 const startServer = async () => {
