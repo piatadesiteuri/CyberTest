@@ -167,15 +167,15 @@ export default function UserDashboard() {
           </p>
         </div>
 
-        {/* User Progress Overview */}
+        {/* Unified Learning Progress Overview */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-12 border border-gray-100">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-harmony-dark to-harmony-tan rounded-full flex items-center justify-center">
                 <span className="text-2xl font-bold text-white">{user?.firstName?.charAt(0)}</span>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{user?.firstName} {user?.lastName}</h2>
+                <h2 className="text-2xl font-bold text-harmony-dark">{user?.firstName} {user?.lastName}</h2>
                 <p className="text-gray-600 capitalize">{user?.role?.replace('_', ' ')} • {user?.department}</p>
               </div>
             </div>
@@ -187,90 +187,158 @@ export default function UserDashboard() {
             </div>
           </div>
 
-          {/* Custom Progress Bar with Detailed Stats */}
+          {/* Comprehensive Progress Bar */}
           <div className="space-y-6">
             {/* Main Progress Bar */}
             <div className="relative">
-              <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+              <div className="w-full bg-gray-200 rounded-full h-8 overflow-hidden">
                 <div 
-                  className="bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 h-6 rounded-full transition-all duration-1000 ease-out relative" 
+                  className="bg-gradient-to-r from-harmony-dark via-harmony-tan to-warm-gold h-8 rounded-full transition-all duration-1000 ease-out relative" 
                   style={{width: `${dashboardData?.overallProgress || 0}%`}}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-pulse"></div>
                 </div>
               </div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-semibold text-white drop-shadow-lg">
+                <span className="text-lg font-bold text-white drop-shadow-lg">
                   {dashboardData?.overallProgress || 0}% Complete
                 </span>
               </div>
             </div>
 
-            {/* Detailed Progress Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {/* Courses Progress */}
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
-                <div className="flex items-center justify-between mb-2">
-                  <BookOpen className="w-5 h-5 text-blue-600" />
-                  <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">Courses</span>
+            {/* Level-based Progress Breakdown */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Foundation Level */}
+              <div className="bg-gradient-to-br from-warm-gold/10 to-warm-gold/20 rounded-xl p-6 border border-warm-gold/30">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-warm-gold rounded-full flex items-center justify-center">
+                      <span className="text-sm font-bold text-white">F</span>
+                    </div>
+                    <span className="text-lg font-semibold text-harmony-dark">Foundation</span>
+                  </div>
+                  <span className="text-sm text-gray-600">Level 1</span>
                 </div>
-                <div className="text-2xl font-bold text-blue-900">
-                  {courses.filter(c => c.level === 'foundation').length}
-                </div>
-                <div className="text-sm text-blue-700">
-                  Foundation Level
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Modules</span>
+                    <span className="font-semibold text-harmony-dark">
+                      {courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
+                        const progress = course.userProgress;
+                        return acc + (progress ? progress.completedModules : 0);
+                      }, 0)}/{courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
+                        const progress = course.userProgress;
+                        return acc + (progress ? progress.totalModules : 0);
+                      }, 0)}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-warm-gold h-2 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${(() => {
+                          const total = courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
+                            const progress = course.userProgress;
+                            return acc + (progress ? progress.totalModules : 0);
+                          }, 0);
+                          const completed = courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
+                            const progress = course.userProgress;
+                            return acc + (progress ? progress.completedModules : 0);
+                          }, 0);
+                          return total > 0 ? (completed / total) * 100 : 0;
+                        })()}%`
+                      }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {courses.filter(c => c.level === 'foundation').length} courses available
+                  </div>
                 </div>
               </div>
 
-              {/* Modules Progress */}
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
-                <div className="flex items-center justify-between mb-2">
-                  <Target className="w-5 h-5 text-purple-600" />
-                  <span className="text-xs font-medium text-purple-600 uppercase tracking-wide">Modules</span>
+              {/* Advanced Level */}
+              <div className="bg-gradient-to-br from-harmony-dark/10 to-harmony-dark/20 rounded-xl p-6 border border-harmony-dark/30">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-harmony-dark rounded-full flex items-center justify-center">
+                      <span className="text-sm font-bold text-white">A</span>
+                    </div>
+                    <span className="text-lg font-semibold text-harmony-dark">Advanced</span>
+                  </div>
+                  <span className="text-sm text-gray-600">Level 2</span>
                 </div>
-                <div className="text-2xl font-bold text-purple-900">
-                  {dashboardData ? `${dashboardData.completedModules}/${dashboardData.totalModules}` : '0/0'}
-                </div>
-                <div className="text-sm text-purple-700">
-                  {dashboardData ? `${Math.round((dashboardData.completedModules / dashboardData.totalModules) * 100)}% Complete` : '0% Complete'}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Modules</span>
+                    <span className="font-semibold text-harmony-dark">
+                      {courses.filter(c => c.level === 'advanced').reduce((acc, course) => {
+                        const progress = course.userProgress;
+                        return acc + (progress ? progress.completedModules : 0);
+                      }, 0)}/{courses.filter(c => c.level === 'advanced').reduce((acc, course) => {
+                        const progress = course.userProgress;
+                        return acc + (progress ? progress.totalModules : 0);
+                      }, 0)}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-harmony-dark h-2 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${(() => {
+                          const total = courses.filter(c => c.level === 'advanced').reduce((acc, course) => {
+                            const progress = course.userProgress;
+                            return acc + (progress ? progress.totalModules : 0);
+                          }, 0);
+                          const completed = courses.filter(c => c.level === 'advanced').reduce((acc, course) => {
+                            const progress = course.userProgress;
+                            return acc + (progress ? progress.completedModules : 0);
+                          }, 0);
+                          return total > 0 ? (completed / total) * 100 : 0;
+                        })()}%`
+                      }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {courses.filter(c => c.level === 'advanced').length} courses available
+                  </div>
                 </div>
               </div>
 
-              {/* Lessons Progress */}
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-                <div className="flex items-center justify-between mb-2">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <span className="text-xs font-medium text-green-600 uppercase tracking-wide">Lessons</span>
+              {/* Overall Stats */}
+              <div className="bg-gradient-to-br from-harmony-tan/10 to-harmony-tan/20 rounded-xl p-6 border border-harmony-tan/30">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Trophy className="w-6 h-6 text-harmony-tan" />
+                    <span className="text-lg font-semibold text-harmony-dark">Total Progress</span>
+                  </div>
+                  <span className="text-sm text-gray-600">All Levels</span>
                 </div>
-                <div className="text-2xl font-bold text-green-900">
-                  {dashboardData ? `${dashboardData.completedLessons}/${dashboardData.totalLessons}` : '0/0'}
-                </div>
-                <div className="text-sm text-green-700">
-                  {dashboardData ? `${Math.round((dashboardData.completedLessons / dashboardData.totalLessons) * 100)}% Complete` : '0% Complete'}
-                </div>
-              </div>
-
-              {/* Time Spent */}
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
-                <div className="flex items-center justify-between mb-2">
-                  <Clock className="w-5 h-5 text-orange-600" />
-                  <span className="text-xs font-medium text-orange-600 uppercase tracking-wide">Time Spent</span>
-                </div>
-                <div className="text-2xl font-bold text-orange-900">
-                  {dashboardData ? `${Math.round(dashboardData.totalTimeSpent)}m` : '0m'}
-                </div>
-                <div className="text-sm text-orange-700">
-                  Total Learning Time
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Time Spent</span>
+                    <span className="font-semibold text-harmony-dark">
+                      {dashboardData ? `${Math.round(dashboardData.totalTimeSpent)}m` : '0m'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Lessons</span>
+                    <span className="font-semibold text-harmony-dark">
+                      {dashboardData ? `${dashboardData.completedLessons}/${dashboardData.totalLessons}` : '0/0'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {dashboardData?.averageScore ? `Avg Score: ${Math.round(dashboardData.averageScore)}%` : 'No quizzes taken yet'}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Progress Summary */}
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+            {/* Learning Journey Status */}
+            <div className="bg-gradient-to-r from-harmony-cream/50 to-harmony-tan/50 rounded-xl p-4 border border-harmony-tan/30">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Trophy className="w-5 h-5 text-yellow-600" />
-                  <span className="text-sm font-medium text-gray-700">Learning Journey Status</span>
+                  <Target className="w-5 h-5 text-harmony-dark" />
+                  <span className="text-sm font-medium text-harmony-dark">Learning Journey Status</span>
                 </div>
                 <div className="text-sm text-gray-600">
                   {!dashboardData || dashboardData.completedModules === 0 ? 'Getting Started' : 
