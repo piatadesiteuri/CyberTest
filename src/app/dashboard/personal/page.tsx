@@ -6,16 +6,16 @@ import { useEffect } from 'react';
 import UserPersonalizedDashboard from '@/components/UserPersonalizedDashboard';
 
 export default function PersonalDashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!isLoading && !user) {
       router.push('/auth');
     }
-  }, [user, loading, router]);
+  }, [user, isLoading, router]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-harmony-cream via-white to-harmony-tan">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

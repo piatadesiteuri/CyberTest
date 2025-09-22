@@ -122,7 +122,7 @@ export default function UserPersonalizedDashboard() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-harmony-dark mb-2">
-            Welcome back, {user?.name || 'User'}! 👋
+            Welcome back, {user?.firstName || 'User'}! 👋
           </h1>
           <p className="text-gray-600">
             Here's your personalized cybersecurity training progress
