@@ -1,0 +1,4 @@
+Force rebuild for .env.railway visibility issue
+Backend needs proper environment variables to be accessible
+.env.railway exists but Railway might not detect it properly
+Timestamp: Mon Sep 22 23:09:58 EEST 2025
