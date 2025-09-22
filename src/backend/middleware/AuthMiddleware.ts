@@ -11,7 +11,7 @@ export interface AuthenticatedRequest extends Request {
 
 export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
   try {
-    const authHeader = req.headers.authorization;
+    const authHeader = (req as any).headers.authorization;
     const token = JwtUtils.extractTokenFromHeader(authHeader);
 
     if (!token) {
