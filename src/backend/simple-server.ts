@@ -316,6 +316,67 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
   }
 });
 
+// Logout endpoint
+app.post('/api/auth/logout', (req: Request, res: Response) => {
+  console.log('🚪 LOGOUT REQUEST received');
+  
+  // Simply return success - in a stateless JWT system, logout is handled client-side
+  res.status(200).json({
+    success: true,
+    message: 'Logout successful'
+  });
+});
+
+// Progress endpoints
+app.get('/api/progress/stats', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    console.log('📊 PROGRESS STATS requested for user:', (req as any).user?.userId);
+    
+    // Return mock data for now - implement actual progress logic later
+    const mockStats = {
+      coursesCompleted: 0,
+      lessonsCompleted: 0,
+      quizzesCompleted: 0,
+      totalTimeSpent: 0,
+      averageScore: 0,
+      lastActivity: null
+    };
+    
+    res.status(200).json({
+      success: true,
+      data: mockStats
+    });
+  } catch (error) {
+    console.error('❌ PROGRESS STATS ERROR:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch progress stats'
+    });
+  }
+});
+
+app.get('/api/progress/completed-quizzes', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    console.log('📝 COMPLETED QUIZZES requested for user:', (req as any).user?.userId);
+    
+    // Return mock data for now - implement actual quiz history logic later
+    const mockQuizzes = {
+      completedQuizzes: []
+    };
+    
+    res.status(200).json({
+      success: true,
+      data: mockQuizzes
+    });
+  } catch (error) {
+    console.error('❌ COMPLETED QUIZZES ERROR:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch completed quizzes'
+    });
+  }
+});
+
 // Course routes (legacy)
 app.get('/api/courses', (req: Request, res: Response) => courseController.getCourses(req, res));
 app.get('/api/courses/:id', (req: Request, res: Response) => courseController.getCourseById(req, res));
