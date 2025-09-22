@@ -365,16 +365,17 @@ function RichTextEditor({ value, onChange }: RichTextEditorProps) {
       </div>
 
       {/* Editor */}
-      <div
-        contentEditable
-        onInput={(e) => onChange(e.currentTarget.innerHTML)}
-        dangerouslySetInnerHTML={{ __html: value }}
-        className="min-h-[300px] p-4 bg-white/5 text-white prose prose-invert max-w-none focus:outline-none"
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="min-h-[300px] w-full p-4 bg-white/5 text-white focus:outline-none border-0 resize-none"
         style={{
           lineHeight: '1.6',
           direction: 'ltr',
           textAlign: 'left',
+          fontFamily: 'inherit',
         }}
+        placeholder="Enter your lesson content here..."
       />
 
       {/* Help Text */}
