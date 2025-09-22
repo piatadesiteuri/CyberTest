@@ -12,7 +12,7 @@ export class ProgressController {
   // Mark lesson as completed
   async markLessonComplete(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { lessonId, courseId, moduleId, timeSpent } = req.body;
+      const { lessonId, courseId, moduleId, timeSpent } = (req as any).body;
       const userId = req.user?.userId;
 
       if (!userId) {
@@ -51,7 +51,7 @@ export class ProgressController {
   // Unmark lesson as completed
   async unmarkLessonComplete(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { lessonId } = req.body;
+      const { lessonId } = (req as any).body;
       const userId = req.user?.userId;
 
       if (!userId) {
@@ -88,7 +88,7 @@ export class ProgressController {
   // Get user progress for a course
   async getCourseProgress(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { courseId } = req.params;
+      const { courseId } = (req as any).params;
       const userId = req.user?.userId;
 
       if (!userId) {
@@ -114,7 +114,7 @@ export class ProgressController {
   // Get user progress for a specific lesson
   async getLessonProgress(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { lessonId } = req.params;
+      const { lessonId } = (req as any).params;
       const userId = req.user?.userId;
 
       if (!userId) {
@@ -140,7 +140,7 @@ export class ProgressController {
   // Update lesson time spent
   async updateLessonTime(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { lessonId, timeSpent } = req.body;
+      const { lessonId, timeSpent } = (req as any).body;
       const userId = req.user?.userId;
 
       if (!userId) {
@@ -214,7 +214,7 @@ export class ProgressController {
   // Get next incomplete lesson for resume functionality
   async getNextLesson(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { courseId } = req.params;
+      const { courseId } = (req as any).params;
       const userId = req.user?.userId;
 
       if (!userId) {
@@ -240,7 +240,7 @@ export class ProgressController {
   // Get all lessons progress for a course
   async getCourseLessonsProgress(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { courseId } = req.params;
+      const { courseId } = (req as any).params;
       const userId = req.user?.userId;
 
       if (!userId) {
@@ -287,7 +287,7 @@ export class ProgressController {
   // Check if quiz is unlocked
   async checkQuizUnlock(req: Request, res: Response): Promise<void> {
     try {
-      const { quizId } = req.params;
+      const { quizId } = (req as any).params;
       const userId = (req as any).user?.userId;
 
       if (!userId) {
@@ -316,7 +316,7 @@ export class ProgressController {
   // Get available quizzes (unlocked and locked)
   async getAvailableQuizzes(req: Request, res: Response): Promise<void> {
     try {
-      const { courseId } = req.params;
+      const { courseId } = (req as any).params;
       const userId = (req as any).user?.userId;
 
       if (!userId) {
@@ -345,7 +345,7 @@ export class ProgressController {
   // Get module progress
   async getModuleProgress(req: Request, res: Response): Promise<void> {
     try {
-      const { moduleId } = req.params;
+      const { moduleId } = (req as any).params;
       const userId = (req as any).user?.userId;
 
       if (!userId) {
@@ -466,7 +466,7 @@ export class ProgressController {
         return;
       }
 
-      const quizAttempt = await this.progressService.createQuizAttempt(userId, req.body);
+      const quizAttempt = await this.progressService.createQuizAttempt(userId, (req as any).body);
       res.json({ success: true, quizAttempt });
     } catch (error) {
       console.error('Error creating quiz attempt:', error);
