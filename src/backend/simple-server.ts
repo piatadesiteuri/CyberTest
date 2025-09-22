@@ -398,7 +398,7 @@ if (NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../../public')));
   
   // Serve Next.js pages - catch all non-API routes
-  app.get('*', (req: Request, res: Response): void => {
+  app.get('/(.*)', (req: Request, res: Response): void => {
     // Don't serve static files for API routes
     if (req.path.startsWith('/api')) {
       res.status(404).json({ error: 'API endpoint not found' });
