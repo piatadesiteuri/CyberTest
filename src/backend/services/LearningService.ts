@@ -373,8 +373,8 @@ export class LearningService {
   }
 
   async updateUserProgress(id: string, updateData: UpdateUserProgressData): Promise<void> {
-    const fields = [];
-    const values = [];
+    const fields: string[] = [];
+    const values: any[] = [];
 
     if (updateData.status !== undefined) {
       fields.push('status = ?');

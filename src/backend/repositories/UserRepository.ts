@@ -63,8 +63,8 @@ export class UserRepository implements IUserRepository {
   }
 
   async update(id: string, userData: UpdateUserData): Promise<User | null> {
-    const fields = [];
-    const values = [];
+    const fields: string[] = [];
+    const values: any[] = [];
 
     if (userData.firstName !== undefined) {
       fields.push('first_name = ?');

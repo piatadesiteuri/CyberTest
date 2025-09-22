@@ -84,8 +84,8 @@ export class PhishingSimulationService {
 
   async updateSimulationSession(sessionId: string, updates: Partial<PhishingSimulationSession>): Promise<PhishingSimulationSession | null> {
     try {
-      const updateFields = [];
-      const updateValues = [];
+      const updateFields: string[] = [];
+      const updateValues: any[] = [];
 
       if (updates.status !== undefined) {
         updateFields.push('status = ?');
@@ -167,7 +167,7 @@ export class PhishingSimulationService {
       const campaigns = rows as any[];
       const mappedCampaigns = campaigns.map(campaign => {
         // Handle target_groups - it might be stored as comma-separated string or JSON
-        let targetGroups = [];
+        let targetGroups: any[] = [];
         try {
           if (campaign.target_groups) {
             if (typeof campaign.target_groups === 'string') {
