@@ -520,9 +520,9 @@ export default function UserDashboard() {
         </div>
 
         {/* Achievements & Gamification */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 mt-8">
           {/* Achievements */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+          <div className="bg-gradient-to-br from-white/90 to-harmony-cream/30 rounded-2xl shadow-lg p-8 border border-warm-gold/20">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Achievements</h2>
             <div className="space-y-4">
               {dashboardData?.completedQuizzes && dashboardData.completedQuizzes.length > 0 ? (
@@ -552,7 +552,7 @@ export default function UserDashboard() {
           </div>
 
           {/* Learning Stats */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+          <div className="bg-gradient-to-br from-white/90 to-harmony-tan/30 rounded-2xl shadow-lg p-8 border border-warm-copper/20">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Learning Stats</h2>
             <div className="space-y-6">
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-warm-gold/10 to-warm-gold/20 rounded-lg border border-warm-gold/30">
@@ -610,16 +610,16 @@ export default function UserDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-gradient-to-r from-harmony-dark to-green-700 rounded-2xl shadow-xl p-8 text-white">
+        <div className="bg-gradient-to-r from-warm-bronze to-warm-copper rounded-2xl shadow-xl p-8 text-white mt-8">
           <h2 className="text-2xl font-bold mb-4">Ready to Continue Learning?</h2>
-          <p className="text-harmony-cream mb-6 max-w-2xl">
+          <p className="text-white/90 mb-6 max-w-2xl">
             Take the next step in your cybersecurity journey. Choose from our interactive modules, 
             hands-on labs, or real-world simulations.
           </p>
           <div className="flex flex-wrap gap-4">
             <button 
               onClick={handleResumeTraining}
-              className="bg-white text-harmony-dark px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center"
+              className="bg-white text-warm-bronze px-6 py-3 rounded-lg font-semibold hover:bg-harmony-cream transition-colors flex items-center"
             >
               <CyberTraining className="w-5 h-5 mr-2" />
               Resume Training
