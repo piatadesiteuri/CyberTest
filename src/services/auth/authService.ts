@@ -5,6 +5,8 @@ class AuthService {
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     try {
+      console.log('🔗 AuthService login - baseUrl:', this.baseUrl)
+      console.log('🔗 AuthService login - NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL)
       const response = await fetch(`${this.baseUrl}/auth/login`, {
         method: 'POST',
         headers: {
