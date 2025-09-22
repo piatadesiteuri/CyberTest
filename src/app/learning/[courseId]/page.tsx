@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { progressService } from '@/services/progressService'
+import { courseService } from '@/services/courseService'
 import { BookOpen, Clock, CheckCircle, Lock, Play, ChevronRight, Trophy, Users, Target, ArrowLeft } from 'lucide-react'
 
 interface Course {
@@ -95,28 +96,21 @@ export default function CoursePage() {
     const fetchCourse = async () => {
       console.log('🔍 Fetching course with ID:', courseId)
       try {
-        const response = await fetch(`http://localhost:3001/api/courses/${courseId}`)
-        console.log('📡 Response status:', response.status)
+        const course = await courseService.getCourseById(courseId as string)
+        console.log('📊 Course data received:', course)
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch course: ${response.status}`)
-        }
-        
-        const data = await response.json()
-        console.log('📊 Response data:', data)
-        
-        if (data.success) {
-          console.log('✅ Course data received:', data.course)
+        if (course) {
+          console.log('✅ Course data received:', course)
           
           // Fetch user progress for this course
           try {
             const progressResponse = await progressService.getCourseProgress(courseId as string)
             console.log('📈 Progress data received:', progressResponse.data)
             
-            // Get all lessons and check individual progress for each
-            const allLessons = data.course.modules.flatMap((module: any) => 
-              module.lessons.map((lesson: any) => ({ ...lesson, moduleId: module.id }))
-            )
+          // Get all lessons and check individual progress for each
+          const allLessons = course.modules.flatMap((module: any) => 
+            module.lessons.map((lesson: any) => ({ ...lesson, moduleId: module.id }))
+          )
             
             // Check progress for each lesson individually
             const lessonProgressPromises = allLessons.map(async (lesson: any) => {
@@ -251,13 +245,13 @@ export default function CoursePage() {
             }
           } catch (progressError) {
             console.error('⚠️ Error fetching progress, using course without progress:', progressError)
-            setCourse(data.course)
+            setCourse(course)
           }
           
           setLoading(false)
-          console.log('🔄 Loading set to false, course set to:', data.course)
+          console.log('🔄 Loading set to false, course set to:', course)
         } else {
-          throw new Error(data.message || 'Failed to fetch course')
+          throw new Error('Course not found')
         }
       } catch (error) {
         console.error('❌ Error fetching course:', error)
