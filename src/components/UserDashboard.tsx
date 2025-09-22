@@ -224,7 +224,7 @@ export default function UserDashboard() {
                 </div>
               </div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-lg font-bold text-white drop-shadow-lg">
+                <span className="text-lg font-bold text-harmony-dark drop-shadow-sm">
                   {(() => {
                     // Foundation: 3 completed out of 5 total
                     const foundationCompleted = courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
@@ -408,10 +408,6 @@ export default function UserDashboard() {
                       <div className="flex items-center space-x-2 text-sm text-gray-500">
                         <BookOpen className="w-4 h-4" />
                         <span>{course.estimatedDuration} min</span>
-                        <span>•</span>
-                        <span className={`px-2 py-1 rounded-full text-xs ${status.bg} ${status.color}`}>
-                          {status.text}
-                        </span>
                       </div>
                       <button 
                         onClick={() => handleCourseClick(course.id)}
