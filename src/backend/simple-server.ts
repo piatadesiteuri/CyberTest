@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
@@ -65,7 +65,7 @@ app.use(cors({
 }));
 
 // Handle preflight requests - use middleware instead of specific route
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.method === 'OPTIONS') {
     const allowedOrigins = [
       'http://localhost:3000',
@@ -93,7 +93,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
   res.json({
     success: true,
     message: 'Backend server is running',
@@ -102,7 +102,7 @@ app.get('/health', (req, res) => {
 });
 
 // Register endpoint with database
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', async (req: Request, res: Response) => {
   try {
     console.log('Register request received:', req.body);
     
@@ -188,7 +188,7 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // Login endpoint with database verification
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', async (req: Request, res: Response) => {
   try {
     console.log('Login request received:', req.body);
     
@@ -290,96 +290,96 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Course routes (legacy)
-app.get('/api/courses', (req, res) => courseController.getCourses(req, res));
-app.get('/api/courses/:id', (req, res) => courseController.getCourseById(req, res));
+app.get('/api/courses', (req: Request, res: Response) => courseController.getCourses(req, res));
+app.get('/api/courses/:id', (req: Request, res: Response) => courseController.getCourseById(req, res));
 
 // Learning routes
-app.post('/api/learning/courses', (req, res) => learningController.createCourse(req, res));
-app.get('/api/learning/courses/stats', (req, res) => learningController.getCoursesWithStats(req, res));
-app.get('/api/learning/courses/published', (req, res) => learningController.getAllPublishedCourses(req, res));
-app.get('/api/learning/courses/level/:level', (req, res) => learningController.getCoursesByLevel(req, res));
-app.get('/api/learning/courses/:id', (req, res) => learningController.getCourseById(req, res));
+app.post('/api/learning/courses', (req: Request, res: Response) => learningController.createCourse(req, res));
+app.get('/api/learning/courses/stats', (req: Request, res: Response) => learningController.getCoursesWithStats(req, res));
+app.get('/api/learning/courses/published', (req: Request, res: Response) => learningController.getAllPublishedCourses(req, res));
+app.get('/api/learning/courses/level/:level', (req: Request, res: Response) => learningController.getCoursesByLevel(req, res));
+app.get('/api/learning/courses/:id', (req: Request, res: Response) => learningController.getCourseById(req, res));
 
 // Module routes
-app.post('/api/learning/modules', (req, res) => learningController.createModule(req, res));
-app.get('/api/learning/courses/:courseId/modules', (req, res) => learningController.getModulesByCourseId(req, res));
+app.post('/api/learning/modules', (req: Request, res: Response) => learningController.createModule(req, res));
+app.get('/api/learning/courses/:courseId/modules', (req: Request, res: Response) => learningController.getModulesByCourseId(req, res));
 
 // Lesson routes
-app.post('/api/learning/lessons', (req, res) => learningController.createLesson(req, res));
-app.get('/api/learning/modules/:moduleId/lessons', (req, res) => learningController.getLessonsByModuleId(req, res));
+app.post('/api/learning/lessons', (req: Request, res: Response) => learningController.createLesson(req, res));
+app.get('/api/learning/modules/:moduleId/lessons', (req: Request, res: Response) => learningController.getLessonsByModuleId(req, res));
 
 // Quiz routes
-app.post('/api/learning/quizzes', (req, res) => learningController.createQuiz(req, res));
-app.get('/api/learning/quizzes/:id', (req, res) => learningController.getQuizById(req, res));
-app.get('/api/learning/modules/:moduleId/quizzes', (req, res) => learningController.getQuizzesByModuleId(req, res));
+app.post('/api/learning/quizzes', (req: Request, res: Response) => learningController.createQuiz(req, res));
+app.get('/api/learning/quizzes/:id', (req: Request, res: Response) => learningController.getQuizById(req, res));
+app.get('/api/learning/modules/:moduleId/quizzes', (req: Request, res: Response) => learningController.getQuizzesByModuleId(req, res));
 
 // Question routes
-app.post('/api/learning/questions', (req, res) => learningController.createQuestion(req, res));
-app.get('/api/learning/quizzes/:quizId/questions', (req, res) => learningController.getQuestionsByQuizId(req, res));
+app.post('/api/learning/questions', (req: Request, res: Response) => learningController.createQuestion(req, res));
+app.get('/api/learning/quizzes/:quizId/questions', (req: Request, res: Response) => learningController.getQuestionsByQuizId(req, res));
 
 // Phishing simulation routes
-app.post('/api/phishing/campaigns', (req, res) => phishingController.createCampaign(req, res));
-app.get('/api/phishing/campaigns', (req, res) => phishingController.getCampaigns(req, res));
-app.get('/api/phishing/campaigns/:id', (req, res) => phishingController.getCampaignById(req, res));
-app.post('/api/phishing/templates', (req, res) => phishingController.createTemplate(req, res));
-app.get('/api/phishing/campaigns/:campaignId/templates', (req, res) => phishingController.getTemplatesByCampaign(req, res));
-app.post('/api/phishing/send', (req, res) => phishingController.sendPhishingEmail(req, res));
-app.post('/api/phishing/track/open', (req, res) => phishingController.trackEmailOpen(req, res));
-app.post('/api/phishing/track/click', (req, res) => phishingController.trackLinkClick(req, res));
-app.get('/api/phishing/campaigns/:campaignId/report', (req, res) => phishingController.generateReport(req, res));
-app.get('/api/phishing/campaigns/:campaignId/results', (req, res) => phishingController.getResultsByCampaign(req, res));
+app.post('/api/phishing/campaigns', (req: Request, res: Response) => phishingController.createCampaign(req, res));
+app.get('/api/phishing/campaigns', (req: Request, res: Response) => phishingController.getCampaigns(req, res));
+app.get('/api/phishing/campaigns/:id', (req: Request, res: Response) => phishingController.getCampaignById(req, res));
+app.post('/api/phishing/templates', (req: Request, res: Response) => phishingController.createTemplate(req, res));
+app.get('/api/phishing/campaigns/:campaignId/templates', (req: Request, res: Response) => phishingController.getTemplatesByCampaign(req, res));
+app.post('/api/phishing/send', (req: Request, res: Response) => phishingController.sendPhishingEmail(req, res));
+app.post('/api/phishing/track/open', (req: Request, res: Response) => phishingController.trackEmailOpen(req, res));
+app.post('/api/phishing/track/click', (req: Request, res: Response) => phishingController.trackLinkClick(req, res));
+app.get('/api/phishing/campaigns/:campaignId/report', (req: Request, res: Response) => phishingController.generateReport(req, res));
+app.get('/api/phishing/campaigns/:campaignId/results', (req: Request, res: Response) => phishingController.getResultsByCampaign(req, res));
 
 // Phishing Simulation routes
-app.post('/api/phishing-simulation/start', (req, res) => phishingSimulationController.startSimulation(req, res));
-app.put('/api/phishing-simulation/:sessionId', (req, res) => phishingSimulationController.updateSimulation(req, res));
-app.get('/api/phishing-simulation/:sessionId', (req, res) => phishingSimulationController.getSimulation(req, res));
-app.get('/api/phishing-simulation/campaigns/active', (req, res) => phishingSimulationController.getActiveCampaigns(req, res));
-app.get('/api/phishing-simulation/templates/:campaignId', (req, res) => phishingSimulationController.getTemplatesByCampaign(req, res));
-app.post('/api/phishing-simulation/:sessionId/track', (req, res) => phishingSimulationController.trackAction(req, res));
+app.post('/api/phishing-simulation/start', (req: Request, res: Response) => phishingSimulationController.startSimulation(req, res));
+app.put('/api/phishing-simulation/:sessionId', (req: Request, res: Response) => phishingSimulationController.updateSimulation(req, res));
+app.get('/api/phishing-simulation/:sessionId', (req: Request, res: Response) => phishingSimulationController.getSimulation(req, res));
+app.get('/api/phishing-simulation/campaigns/active', (req: Request, res: Response) => phishingSimulationController.getActiveCampaigns(req, res));
+app.get('/api/phishing-simulation/templates/:campaignId', (req: Request, res: Response) => phishingSimulationController.getTemplatesByCampaign(req, res));
+app.post('/api/phishing-simulation/:sessionId/track', (req: Request, res: Response) => phishingSimulationController.trackAction(req, res));
 
 // Admin routes (temporarily without auth for testing)
-app.get('/api/admin/dashboard/metrics', (req, res) => adminController.getDashboardMetrics(req, res));
-app.get('/api/admin/users/groups', (req, res) => adminController.getUserGroups(req, res));
-app.get('/api/admin/users/enrollments', (req, res) => adminController.getRecentEnrollments(req, res));
-app.get('/api/admin/security/alerts', (req, res) => adminController.getSecurityAlerts(req, res));
-app.put('/api/admin/security/alerts/:alertId', (req, res) => adminController.updateAlertStatus(req, res));
-app.get('/api/admin/training/programs', (req, res) => adminController.getTrainingPrograms(req, res));
-app.post('/api/admin/training/programs', (req, res) => adminController.createTrainingProgram(req, res));
-app.put('/api/admin/training/programs/:programId', (req, res) => adminController.updateTrainingProgram(req, res));
-app.get('/api/admin/simulations', (req, res) => adminController.getSimulations(req, res));
-app.post('/api/admin/simulations/:simulationId/start', (req, res) => adminController.startSimulation(req, res));
-app.post('/api/admin/simulations/:simulationId/pause', (req, res) => adminController.pauseSimulation(req, res));
-app.put('/api/admin/simulations/:simulationId/configure', (req, res) => adminController.configureSimulation(req, res));
-app.get('/api/admin/reports/metrics', (req, res) => adminController.getKeyMetrics(req, res));
-app.get('/api/admin/reports', (req, res) => adminController.getReports(req, res));
-app.post('/api/admin/reports/generate', (req, res) => adminController.generateReport(req, res));
-app.get('/api/admin/reports/:reportId/download', (req, res) => adminController.downloadReport(req, res));
-app.get('/api/admin/activity/recent', (req, res) => adminController.getRecentActivity(req, res));
-app.get('/api/admin/activity/log', (req, res) => adminController.getActivityLog(req, res));
-app.get('/api/admin/system/status', (req, res) => adminController.getSystemStatus(req, res));
-app.post('/api/admin/users/groups', (req, res) => adminController.createUserGroup(req, res));
-app.post('/api/admin/users/groups/add', (req, res) => adminController.addUserToGroup(req, res));
-app.post('/api/admin/users/groups/remove', (req, res) => adminController.removeUserFromGroup(req, res));
+app.get('/api/admin/dashboard/metrics', (req: Request, res: Response) => adminController.getDashboardMetrics(req, res));
+app.get('/api/admin/users/groups', (req: Request, res: Response) => adminController.getUserGroups(req, res));
+app.get('/api/admin/users/enrollments', (req: Request, res: Response) => adminController.getRecentEnrollments(req, res));
+app.get('/api/admin/security/alerts', (req: Request, res: Response) => adminController.getSecurityAlerts(req, res));
+app.put('/api/admin/security/alerts/:alertId', (req: Request, res: Response) => adminController.updateAlertStatus(req, res));
+app.get('/api/admin/training/programs', (req: Request, res: Response) => adminController.getTrainingPrograms(req, res));
+app.post('/api/admin/training/programs', (req: Request, res: Response) => adminController.createTrainingProgram(req, res));
+app.put('/api/admin/training/programs/:programId', (req: Request, res: Response) => adminController.updateTrainingProgram(req, res));
+app.get('/api/admin/simulations', (req: Request, res: Response) => adminController.getSimulations(req, res));
+app.post('/api/admin/simulations/:simulationId/start', (req: Request, res: Response) => adminController.startSimulation(req, res));
+app.post('/api/admin/simulations/:simulationId/pause', (req: Request, res: Response) => adminController.pauseSimulation(req, res));
+app.put('/api/admin/simulations/:simulationId/configure', (req: Request, res: Response) => adminController.configureSimulation(req, res));
+app.get('/api/admin/reports/metrics', (req: Request, res: Response) => adminController.getKeyMetrics(req, res));
+app.get('/api/admin/reports', (req: Request, res: Response) => adminController.getReports(req, res));
+app.post('/api/admin/reports/generate', (req: Request, res: Response) => adminController.generateReport(req, res));
+app.get('/api/admin/reports/:reportId/download', (req: Request, res: Response) => adminController.downloadReport(req, res));
+app.get('/api/admin/activity/recent', (req: Request, res: Response) => adminController.getRecentActivity(req, res));
+app.get('/api/admin/activity/log', (req: Request, res: Response) => adminController.getActivityLog(req, res));
+app.get('/api/admin/system/status', (req: Request, res: Response) => adminController.getSystemStatus(req, res));
+app.post('/api/admin/users/groups', (req: Request, res: Response) => adminController.createUserGroup(req, res));
+app.post('/api/admin/users/groups/add', (req: Request, res: Response) => adminController.addUserToGroup(req, res));
+app.post('/api/admin/users/groups/remove', (req: Request, res: Response) => adminController.removeUserFromGroup(req, res));
 
 // Progress tracking routes (require authentication)
-app.post('/api/progress/lesson/complete', authenticateToken, (req, res) => progressController.markLessonComplete(req, res));
-app.post('/api/progress/lesson/unmark', authenticateToken, (req, res) => progressController.unmarkLessonComplete(req, res));
-app.get('/api/progress/course/:courseId', authenticateToken, (req, res) => progressController.getCourseProgress(req, res));
-app.get('/api/progress/lesson/:lessonId', authenticateToken, (req, res) => progressController.getLessonProgress(req, res));
-app.put('/api/progress/lesson/time', authenticateToken, (req, res) => progressController.updateLessonTime(req, res));
-app.get('/api/progress/stats', authenticateToken, (req, res) => progressController.getLearningStats(req, res));
-app.get('/api/progress/next-lesson/:courseId', authenticateToken, (req, res) => progressController.getNextLesson(req, res));
-app.get('/api/progress/course/:courseId/lessons', authenticateToken, (req, res) => progressController.getCourseLessonsProgress(req, res));
+app.post('/api/progress/lesson/complete', authenticateToken, (req: Request, res: Response) => progressController.markLessonComplete(req, res));
+app.post('/api/progress/lesson/unmark', authenticateToken, (req: Request, res: Response) => progressController.unmarkLessonComplete(req, res));
+app.get('/api/progress/course/:courseId', authenticateToken, (req: Request, res: Response) => progressController.getCourseProgress(req, res));
+app.get('/api/progress/lesson/:lessonId', authenticateToken, (req: Request, res: Response) => progressController.getLessonProgress(req, res));
+app.put('/api/progress/lesson/time', authenticateToken, (req: Request, res: Response) => progressController.updateLessonTime(req, res));
+app.get('/api/progress/stats', authenticateToken, (req: Request, res: Response) => progressController.getLearningStats(req, res));
+app.get('/api/progress/next-lesson/:courseId', authenticateToken, (req: Request, res: Response) => progressController.getNextLesson(req, res));
+app.get('/api/progress/course/:courseId/lessons', authenticateToken, (req: Request, res: Response) => progressController.getCourseLessonsProgress(req, res));
 
 // Advanced quiz unlock system
-app.get('/api/progress/quiz/:quizId/unlock', authenticateToken, (req, res) => progressController.checkQuizUnlock(req, res));
-app.get('/api/progress/course/:courseId/quizzes', authenticateToken, (req, res) => progressController.getAvailableQuizzes(req, res));
-app.get('/api/progress/module/:moduleId', authenticateToken, (req, res) => progressController.getModuleProgress(req, res));
+app.get('/api/progress/quiz/:quizId/unlock', authenticateToken, (req: Request, res: Response) => progressController.checkQuizUnlock(req, res));
+app.get('/api/progress/course/:courseId/quizzes', authenticateToken, (req: Request, res: Response) => progressController.getAvailableQuizzes(req, res));
+app.get('/api/progress/module/:moduleId', authenticateToken, (req: Request, res: Response) => progressController.getModuleProgress(req, res));
 
 // User quiz attempts and completed quizzes
-app.get('/api/progress/quiz-attempts', authenticateToken, (req, res) => progressController.getUserQuizAttempts(req, res));
-app.get('/api/progress/completed-quizzes', authenticateToken, (req, res) => progressController.getUserCompletedQuizzes(req, res));
-app.post('/api/progress/quiz-attempt', authenticateToken, (req, res) => progressController.createQuizAttempt(req, res));
+app.get('/api/progress/quiz-attempts', authenticateToken, (req: Request, res: Response) => progressController.getUserQuizAttempts(req, res));
+app.get('/api/progress/completed-quizzes', authenticateToken, (req: Request, res: Response) => progressController.getUserCompletedQuizzes(req, res));
+app.post('/api/progress/quiz-attempt', authenticateToken, (req: Request, res: Response) => progressController.createQuizAttempt(req, res));
 
 // Start server
 const startServer = async () => {
