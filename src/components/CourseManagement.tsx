@@ -79,8 +79,8 @@ export default function CourseManagement() {
           level: course.level,
           status: course.status,
           estimatedDuration: course.estimatedDuration || course.estimated_duration,
-          enrolledUsers: course.enrolled_users || 0,
-          completionRate: course.completion_rate || 0,
+          enrolledUsers: course.enrolledUsers || 0,
+          completionRate: course.completionRate || 0,
           createdAt: safeDate(course.createdAt || course.created_at),
           updatedAt: safeDate(course.updatedAt || course.updated_at)
         }))
