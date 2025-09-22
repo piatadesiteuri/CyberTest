@@ -383,13 +383,25 @@ app.post('/api/progress/quiz-attempt', authenticateToken, (req, res) => progress
 
 // Start server
 const startServer = async () => {
+  console.log('🔄 Starting server...');
+  console.log('🔧 Environment variables:');
+  console.log('  - PORT:', process.env.PORT);
+  console.log('  - NODE_ENV:', process.env.NODE_ENV);
+  console.log('  - DB_HOST:', process.env.DB_HOST);
+  console.log('  - DB_NAME:', process.env.DB_NAME);
+  console.log('  - JWT_SECRET:', process.env.JWT_SECRET ? 'Set' : 'Not set');
+  
   await connectDB();
   
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Backend server running on port ${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    console.log(`📊 Health check: http://0.0.0.0:${PORT}/health`);
     console.log(`🗄️  Database: ${db ? 'Connected' : 'Not connected'}`);
+    console.log('✅ Server started successfully!');
   });
 };
 
-startServer();
+startServer().catch((error) => {
+  console.error('❌ Failed to start server:', error);
+  process.exit(1);
+});
