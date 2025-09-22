@@ -456,10 +456,10 @@ export default function UserDashboard() {
                 const isLocked = progress.percentage === 0 && index > 0
                 
                 const getStatusColor = () => {
-                  if (isCompleted) return 'warm-gold'
-                  if (isInProgress) return 'warm-gold'
-                  if (isLocked) return 'warm-gold'
-                  return 'warm-gold'
+                  if (isCompleted) return 'warm-copper'
+                  if (isInProgress) return 'warm-amber'
+                  if (isLocked) return 'warm-brass'
+                  return 'gray-400'
                 }
                 
                 const getStatusText = () => {
