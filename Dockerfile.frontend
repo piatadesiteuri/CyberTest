@@ -20,9 +20,8 @@ COPY src/contexts/ ./src/contexts/
 COPY src/services/ ./src/services/
 COPY src/types/ ./src/types/
 COPY src/utils/ ./src/utils/
-COPY public/ ./public/ 2>/dev/null || true
 
-# Create public directory if it doesn't exist
+# Create public directory (no files to copy)
 RUN mkdir -p public
 
 # Set environment variable for API URL (backend service)
