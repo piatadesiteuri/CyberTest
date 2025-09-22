@@ -405,10 +405,10 @@ if (NODE_ENV === 'production') {
     }
     
     // Serve the main Next.js page
-    res.sendFile(path.join(__dirname, '../../.next/server/pages/index.html'), (err) => {
+    return res.sendFile(path.join(__dirname, '../../.next/server/pages/index.html'), (err) => {
       if (err) {
         console.error('Error serving frontend:', err);
-        res.status(500).send('Error loading page');
+        return res.status(500).send('Error loading page');
       }
     });
   });
