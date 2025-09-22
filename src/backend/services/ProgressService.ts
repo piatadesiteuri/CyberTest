@@ -213,6 +213,11 @@ export class ProgressService {
     );
 
     const completedModules = (completedModulesRows as any[]).length;
+    
+    console.log('🔍 Module completion calculation:');
+    console.log('  - Total modules:', totalModules);
+    console.log('  - Completed modules:', completedModules);
+    console.log('  - Module details:', completedModulesRows);
 
     const overallProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
