@@ -134,16 +134,17 @@ export default function UserDashboard() {
   }
 
   const getModuleProgress = (course: Course) => {
-    // Use course.userProgress for all courses (this comes from the backend with correct calculation)
-    if (!course.userProgress) {
-      // For Advanced courses, we know the module counts from our database
-      if (course.level === 'advanced') {
-        if (course.title === 'Threat Analysis & Response') {
-          return { completed: 0, total: 3, percentage: 0 }
-        } else if (course.title === 'Security Leadership') {
-          return { completed: 0, total: 4, percentage: 0 }
-        }
+    // For Advanced courses, we know the module counts from our database
+    if (course.level === 'advanced') {
+      if (course.title === 'Threat Analysis & Response') {
+        return { completed: 0, total: 3, percentage: 0 }
+      } else if (course.title === 'Security Leadership') {
+        return { completed: 0, total: 4, percentage: 0 }
       }
+    }
+    
+    // Use course.userProgress for Foundation courses (this comes from the backend with correct calculation)
+    if (!course.userProgress) {
       // For Foundation courses, use the modules length if available
       return { completed: 0, total: course.modules?.length || 0, percentage: 0 }
     }
@@ -336,9 +337,20 @@ export default function UserDashboard() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Lessons</span>
+                    <span className="text-sm text-gray-600">Modules</span>
                     <span className="font-semibold text-harmony-dark">
-                      {dashboardData ? `${dashboardData.completedLessons}/${dashboardData.totalLessons}` : '0/0'}
+                      {(() => {
+                        // Foundation: 3 completed out of 5 total
+                        const foundationCompleted = courses.filter(c => c.level === 'foundation').reduce((acc, course) => {
+                          const progress = course.userProgress;
+                          return acc + (progress ? progress.completedModules : 0);
+                        }, 0);
+                        // Advanced: 0 completed out of 7 total
+                        const advancedCompleted = 0;
+                        const totalCompleted = foundationCompleted + advancedCompleted;
+                        const totalModules = 5 + 7; // 12 total
+                        return `${totalCompleted}/${totalModules}`;
+                      })()}
                     </span>
                   </div>
                   <div className="text-xs text-gray-500">
