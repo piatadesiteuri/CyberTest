@@ -93,18 +93,17 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(express.json());
 
 // DEBUG: Log specific OPTIONS requests for CORS
-app.options('*', (req: Request, res: Response) => {
-  console.log('🌐 OPTIONS (CORS PREFLIGHT):', {
-    url: req.url,
-    origin: req.headers.origin,
-    method: req.headers['access-control-request-method'],
-    headers: req.headers['access-control-request-headers'],
-    timestamp: new Date().toISOString()
-  });
-  res.header('Access-Control-Allow-Origin', req.headers.origin);
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
-  res.send(200);
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.method === 'OPTIONS') {
+    console.log('🌐 OPTIONS (CORS PREFLIGHT):', {
+      url: req.url,
+      origin: req.headers.origin,
+      method: req.headers['access-control-request-method'],
+      headers: req.headers['access-control-request-headers'],
+      timestamp: new Date().toISOString()
+    });
+  }
+  next();
 });
 
 // Health check
