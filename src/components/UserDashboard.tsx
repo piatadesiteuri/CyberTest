@@ -187,20 +187,98 @@ export default function UserDashboard() {
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
-            <div 
-              className="bg-gradient-to-r from-harmony-dark to-green-600 h-4 rounded-full transition-all duration-500" 
-              style={{width: `${dashboardData?.overallProgress || 0}%`}}
-            ></div>
-          </div>
-          <div className="flex justify-between text-sm text-gray-600">
-            <span>
-              {dashboardData ? `${dashboardData.completedModules} of ${dashboardData.totalModules} modules completed` : '0 of 0 modules completed'}
-            </span>
-            <span>
-              {dashboardData ? `${dashboardData.totalModules - dashboardData.completedModules} modules remaining` : '0 modules remaining'}
-            </span>
+          {/* Custom Progress Bar with Detailed Stats */}
+          <div className="space-y-6">
+            {/* Main Progress Bar */}
+            <div className="relative">
+              <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 h-6 rounded-full transition-all duration-1000 ease-out relative" 
+                  style={{width: `${dashboardData?.overallProgress || 0}%`}}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+                </div>
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-sm font-semibold text-white drop-shadow-lg">
+                  {dashboardData?.overallProgress || 0}% Complete
+                </span>
+              </div>
+            </div>
+
+            {/* Detailed Progress Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {/* Courses Progress */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                <div className="flex items-center justify-between mb-2">
+                  <BookOpen className="w-5 h-5 text-blue-600" />
+                  <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">Courses</span>
+                </div>
+                <div className="text-2xl font-bold text-blue-900">
+                  {courses.filter(c => c.level === 'foundation').length}
+                </div>
+                <div className="text-sm text-blue-700">
+                  Foundation Level
+                </div>
+              </div>
+
+              {/* Modules Progress */}
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                <div className="flex items-center justify-between mb-2">
+                  <Target className="w-5 h-5 text-purple-600" />
+                  <span className="text-xs font-medium text-purple-600 uppercase tracking-wide">Modules</span>
+                </div>
+                <div className="text-2xl font-bold text-purple-900">
+                  {dashboardData ? `${dashboardData.completedModules}/${dashboardData.totalModules}` : '0/0'}
+                </div>
+                <div className="text-sm text-purple-700">
+                  {dashboardData ? `${Math.round((dashboardData.completedModules / dashboardData.totalModules) * 100)}% Complete` : '0% Complete'}
+                </div>
+              </div>
+
+              {/* Lessons Progress */}
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                <div className="flex items-center justify-between mb-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-xs font-medium text-green-600 uppercase tracking-wide">Lessons</span>
+                </div>
+                <div className="text-2xl font-bold text-green-900">
+                  {dashboardData ? `${dashboardData.completedLessons}/${dashboardData.totalLessons}` : '0/0'}
+                </div>
+                <div className="text-sm text-green-700">
+                  {dashboardData ? `${Math.round((dashboardData.completedLessons / dashboardData.totalLessons) * 100)}% Complete` : '0% Complete'}
+                </div>
+              </div>
+
+              {/* Time Spent */}
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+                <div className="flex items-center justify-between mb-2">
+                  <Clock className="w-5 h-5 text-orange-600" />
+                  <span className="text-xs font-medium text-orange-600 uppercase tracking-wide">Time Spent</span>
+                </div>
+                <div className="text-2xl font-bold text-orange-900">
+                  {dashboardData ? `${Math.round(dashboardData.totalTimeSpent)}m` : '0m'}
+                </div>
+                <div className="text-sm text-orange-700">
+                  Total Learning Time
+                </div>
+              </div>
+            </div>
+
+            {/* Progress Summary */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Trophy className="w-5 h-5 text-yellow-600" />
+                  <span className="text-sm font-medium text-gray-700">Learning Journey Status</span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {!dashboardData || dashboardData.completedModules === 0 ? 'Getting Started' : 
+                   dashboardData.completedModules === dashboardData.totalModules ? 'All Modules Complete!' :
+                   `${dashboardData.totalModules - dashboardData.completedModules} modules remaining`}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
