@@ -1,6 +1,6 @@
 import { authService } from './auth/authService';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 class ProgressService {
   private async makeRequest(endpoint: string, options: RequestInit = {}) {
