@@ -126,7 +126,7 @@ class AdminService {
   }
 
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${API_BASE_URL}/api${endpoint}`;
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -146,34 +146,34 @@ class AdminService {
 
   // Dashboard Metrics
   async getDashboardMetrics(): Promise<DashboardMetrics> {
-    return this.makeRequest<DashboardMetrics>('/api/admin/dashboard/metrics');
+    return this.makeRequest<DashboardMetrics>('/admin/dashboard/metrics');
   }
 
   // User Management
   async getUserGroups(): Promise<UserGroup[]> {
-    return this.makeRequest<UserGroup[]>('/api/admin/users/groups');
+    return this.makeRequest<UserGroup[]>('/admin/users/groups');
   }
 
   async getRecentEnrollments(): Promise<RecentEnrollment[]> {
-    return this.makeRequest<RecentEnrollment[]>('/api/admin/users/enrollments');
+    return this.makeRequest<RecentEnrollment[]>('/admin/users/enrollments');
   }
 
   async createUserGroup(groupData: Partial<UserGroup>): Promise<UserGroup> {
-    return this.makeRequest<UserGroup>('/api/admin/users/groups', {
+    return this.makeRequest<UserGroup>('/admin/users/groups', {
       method: 'POST',
       body: JSON.stringify(groupData),
     });
   }
 
   async addUserToGroup(userId: string, groupId: string): Promise<void> {
-    return this.makeRequest<void>('/api/admin/users/groups/add', {
+    return this.makeRequest<void>('/admin/users/groups/add', {
       method: 'POST',
       body: JSON.stringify({ userId, groupId }),
     });
   }
 
   async removeUserFromGroup(userId: string, groupId: string): Promise<void> {
-    return this.makeRequest<void>('/api/admin/users/groups/remove', {
+    return this.makeRequest<void>('/admin/users/groups/remove', {
       method: 'POST',
       body: JSON.stringify({ userId, groupId }),
     });
@@ -181,7 +181,7 @@ class AdminService {
 
   // Security Alerts
   async getSecurityAlerts(): Promise<SecurityAlert[]> {
-    return this.makeRequest<SecurityAlert[]>('/api/admin/security/alerts');
+    return this.makeRequest<SecurityAlert[]>('/admin/security/alerts');
   }
 
   async updateAlertStatus(alertId: string, status: SecurityAlert['status']): Promise<void> {
@@ -193,11 +193,11 @@ class AdminService {
 
   // Training Programs
   async getTrainingPrograms(): Promise<TrainingProgram[]> {
-    return this.makeRequest<TrainingProgram[]>('/api/admin/training/programs');
+    return this.makeRequest<TrainingProgram[]>('/admin/training/programs');
   }
 
   async createTrainingProgram(programData: Partial<TrainingProgram>): Promise<TrainingProgram> {
-    return this.makeRequest<TrainingProgram>('/api/admin/training/programs', {
+    return this.makeRequest<TrainingProgram>('/admin/training/programs', {
       method: 'POST',
       body: JSON.stringify(programData),
     });
@@ -212,7 +212,7 @@ class AdminService {
 
   // Simulations
   async getSimulations(): Promise<SimulationData[]> {
-    return this.makeRequest<SimulationData[]>('/api/admin/simulations');
+    return this.makeRequest<SimulationData[]>('/admin/simulations');
   }
 
   async startSimulation(simulationId: string): Promise<void> {
@@ -236,15 +236,15 @@ class AdminService {
 
   // Reporting & Analytics
   async getKeyMetrics(): Promise<KeyMetrics[]> {
-    return this.makeRequest<KeyMetrics[]>('/api/admin/reports/metrics');
+    return this.makeRequest<KeyMetrics[]>('/admin/reports/metrics');
   }
 
   async getReports(): Promise<ReportData[]> {
-    return this.makeRequest<ReportData[]>('/api/admin/reports');
+    return this.makeRequest<ReportData[]>('/admin/reports');
   }
 
   async generateReport(reportType: string, period: string, filters?: any): Promise<{ id: string; status: string }> {
-    return this.makeRequest<{ id: string; status: string }>('/api/admin/reports/generate', {
+    return this.makeRequest<{ id: string; status: string }>('/admin/reports/generate', {
       method: 'POST',
       body: JSON.stringify({ reportType, period, filters }),
     });
@@ -256,7 +256,7 @@ class AdminService {
 
   // Activity
   async getRecentActivity(): Promise<ActivityLog[]> {
-    return this.makeRequest<ActivityLog[]>('/api/admin/activity/recent');
+    return this.makeRequest<ActivityLog[]>('/admin/activity/recent');
   }
 
   async getActivityLog(page: number = 1, limit: number = 50, filters?: any): Promise<{
@@ -278,7 +278,7 @@ class AdminService {
 
   // System Status
   async getSystemStatus(): Promise<SystemStatus> {
-    return this.makeRequest<SystemStatus>('/api/admin/system/status');
+    return this.makeRequest<SystemStatus>('/admin/system/status');
   }
 }
 
