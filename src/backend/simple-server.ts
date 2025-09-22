@@ -275,9 +275,10 @@ app.get('/api/courses/:id', (req, res) => courseController.getCourseById(req, re
 
 // Learning routes
 app.post('/api/learning/courses', (req, res) => learningController.createCourse(req, res));
+app.get('/api/learning/courses/stats', (req, res) => learningController.getCoursesWithStats(req, res));
 app.get('/api/learning/courses/published', (req, res) => learningController.getAllPublishedCourses(req, res));
-app.get('/api/learning/courses/:id', (req, res) => learningController.getCourseById(req, res));
 app.get('/api/learning/courses/level/:level', (req, res) => learningController.getCoursesByLevel(req, res));
+app.get('/api/learning/courses/:id', (req, res) => learningController.getCourseById(req, res));
 
 // Module routes
 app.post('/api/learning/modules', (req, res) => learningController.createModule(req, res));

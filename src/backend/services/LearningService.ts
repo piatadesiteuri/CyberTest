@@ -86,6 +86,49 @@ export class LearningService {
     });
   }
 
+  async getCoursesWithStats(): Promise<any[]> {
+    try {
+      // First get all published courses
+      const courses = await this.getAllPublishedCourses();
+      
+      // Then get stats for each course
+      const coursesWithStats = await Promise.all(courses.map(async (course) => {
+        try {
+          // Get enrolled users count
+          const enrolledQuery = 'SELECT COUNT(DISTINCT user_id) as count FROM user_progress WHERE course_id = ?';
+          const [enrolledResults] = await this.db.getPool().execute(enrolledQuery, [course.id]) as [any[], any];
+          const enrolledUsers = enrolledResults[0]?.count || 0;
+          
+          // Get completed users count
+          const completedQuery = 'SELECT COUNT(DISTINCT user_id) as count FROM user_progress WHERE course_id = ? AND progress_percentage = 100';
+          const [completedResults] = await this.db.getPool().execute(completedQuery, [course.id]) as [any[], any];
+          const completedUsers = completedResults[0]?.count || 0;
+          
+          // Calculate completion rate
+          const completionRate = enrolledUsers > 0 ? Math.round((completedUsers / enrolledUsers) * 100) : 0;
+          
+          return {
+            ...course,
+            enrolledUsers: parseInt(enrolledUsers),
+            completionRate
+          };
+        } catch (error) {
+          console.error(`Error getting stats for course ${course.id}:`, error);
+          return {
+            ...course,
+            enrolledUsers: 0,
+            completionRate: 0
+          };
+        }
+      }));
+      
+      return coursesWithStats;
+    } catch (error) {
+      console.error('Error getting courses with stats:', error);
+      throw error;
+    }
+  }
+
   // Module Management
   async createModule(moduleData: CreateModuleData): Promise<Module> {
     const id = this.generateId();

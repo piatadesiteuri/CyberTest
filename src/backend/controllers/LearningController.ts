@@ -99,6 +99,24 @@ export class LearningController {
     }
   }
 
+  async getCoursesWithStats(req: Request, res: Response): Promise<void> {
+    try {
+      const courses = await this.learningService.getCoursesWithStats();
+      
+      res.status(200).json({
+        success: true,
+        data: { courses }
+      });
+    } catch (error) {
+      console.error('Get courses with stats error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get courses with statistics',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
   // Module Management
   async createModule(req: Request, res: Response): Promise<void> {
     try {

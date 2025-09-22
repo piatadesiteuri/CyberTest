@@ -53,7 +53,7 @@ export default function CourseManagement() {
   const fetchCourses = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${API_BASE_URL}/api/learning/courses/published`)
+      const response = await fetch(`${API_BASE_URL}/api/learning/courses/stats`)
       if (response.ok) {
         const data = await response.json()
         console.log('API Response:', data)
