@@ -1,0 +1,4 @@
+# Force Railway frontend rebuild
+# This file triggers a new deployment
+TIMESTAMP=$(date)
+echo "Rebuild triggered at: $TIMESTAMP"
