@@ -43,7 +43,7 @@ interface PhishingEmail {
   difficulty: 'easy' | 'medium' | 'hard'
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app';
 
 // Mock data for fallback
 const phishingEmails: PhishingEmail[] = [

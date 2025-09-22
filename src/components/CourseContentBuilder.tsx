@@ -7,7 +7,7 @@ import LessonModal from './LessonModal'
 import QuizModal from './QuizModal'
 import CoursePreview from './CoursePreview'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'
 
 // Type definitions
 interface Course {

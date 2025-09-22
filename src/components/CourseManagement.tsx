@@ -5,7 +5,7 @@ import { Plus, Edit, Trash2, Eye, Users, Clock, BookOpen, Search, Filter } from 
 import { useToast } from '@/contexts/ToastContext'
 import CourseContentBuilder from './CourseContentBuilder'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'
 
 // Utility function to safely parse dates
 const safeDate = (dateString: any): string => {

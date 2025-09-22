@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { ChevronRight, ChevronDown, Play, BookOpen, Clock, Award, CheckCircle, Lock, User, BarChart3 } from 'lucide-react'
 import { useToast } from '@/contexts/ToastContext'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'
 
 interface Course {
   id: string

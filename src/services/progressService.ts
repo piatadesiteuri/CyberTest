@@ -1,6 +1,6 @@
 import { authService } from './auth/authService';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app';
 
 class ProgressService {
   private async makeRequest(endpoint: string, options: RequestInit = {}) {
