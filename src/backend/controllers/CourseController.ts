@@ -222,7 +222,7 @@ export class CourseController {
 
         if (quizzes.length > 0) {
           // Process all quizzes for this module
-          const moduleQuizzes = [];
+          const moduleQuizzes: any[] = [];
           
           for (const quiz of quizzes) {
             // Get questions for each quiz
