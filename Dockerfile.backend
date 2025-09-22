@@ -17,6 +17,10 @@ RUN npm install -g typescript ts-node
 COPY src/backend/ ./src/backend/
 COPY src/config/ ./src/config/
 COPY .env.railway ./.env
+COPY start-backend.sh ./start-backend.sh
+
+# Make script executable
+RUN chmod +x ./start-backend.sh
 
 # Expose port
 EXPOSE 8080
@@ -29,5 +33,5 @@ ENV PORT=8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
 
-# Start backend server (FĂRĂ frontend serving)
-CMD ["npm", "run", "railway:backend"]
+# Start backend server (FĂRĂ frontend serving) - FORCED OVERRIDE
+CMD ["./start-backend.sh"]

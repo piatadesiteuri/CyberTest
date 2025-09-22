@@ -59,6 +59,9 @@ const connectDB = async () => {
 
 // Middleware
 console.log('🔧 Backend-only mode - frontend served separately');
+console.log('🚀 BACKEND EXPRESS SERVER STARTING - NOT NEXT.JS!');
+console.log('📁 Current working directory:', process.cwd());
+console.log('📝 Script path:', __filename);
 
 app.use(cors({
   origin: [
