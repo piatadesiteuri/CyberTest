@@ -16,7 +16,7 @@ import { jwtConfig } from '../config/database';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || process.env.RAILWAY_PORT || 3001;
+const PORT = parseInt(process.env.PORT || process.env.RAILWAY_PORT || '3001', 10);
 
 // JWT Configuration from config file
 const JWT_SECRET = jwtConfig.secret;
