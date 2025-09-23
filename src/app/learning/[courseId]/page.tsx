@@ -247,7 +247,14 @@ export default function CoursePage() {
             console.error('⚠️ Error fetching progress, using course without progress:', progressError)
             setCourse({
               ...course,
-              modules: course.modules || []
+              modules: course.modules?.map(module => ({
+                ...module,
+                lessons: module.lessons || [],
+                quiz: module.quiz ? {
+                  ...module.quiz,
+                  questions: module.quiz.questions || []
+                } : undefined
+              })) || []
             })
           }
           
