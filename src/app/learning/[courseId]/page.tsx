@@ -108,9 +108,9 @@ export default function CoursePage() {
             console.log('📈 Progress data received:', progressResponse.data)
             
           // Get all lessons and check individual progress for each
-          const allLessons = course.modules.flatMap((module: any) => 
-            module.lessons.map((lesson: any) => ({ ...lesson, moduleId: module.id }))
-          )
+          const allLessons = course?.modules?.flatMap((module: any) => 
+            module.lessons?.map((lesson: any) => ({ ...lesson, moduleId: module.id })) || []
+          ) || []
             
             // Check progress for each lesson individually
             const lessonProgressPromises = allLessons.map(async (lesson: any) => {
@@ -186,27 +186,27 @@ export default function CoursePage() {
             
             // Add progress data to course and lessons
             const courseWithProgress = {
-              ...data.course,
+              ...course,
               userProgress: {
                 ...progressResponse.data,
                 progressPercentage: progressResponse.data.overallProgress
               },
-              modules: data.course.modules.map((module: any) => ({
+              modules: course?.modules?.map((module: any) => ({
                 ...module,
-                lessons: module.lessons.map((lesson: any) => ({
+                lessons: module.lessons?.map((lesson: any) => ({
                   ...lesson,
                   userProgress: lessonProgressMap[lesson.id] || { status: 'not_started' }
-                }))
+                })) || []
               }))
             }
             
             // Add quiz data to modules (from course data)
             const courseWithQuizzes = {
               ...courseWithProgress,
-              modules: courseWithProgress.modules.map((module: any) => ({
+              modules: courseWithProgress.modules?.map((module: any) => ({
                 ...module,
                 quizzes: module.quiz ? [module.quiz] : []
-              }))
+              })) || []
             }
             
             setCourse(courseWithQuizzes)
@@ -245,7 +245,10 @@ export default function CoursePage() {
             }
           } catch (progressError) {
             console.error('⚠️ Error fetching progress, using course without progress:', progressError)
-            setCourse(course)
+            setCourse({
+              ...course,
+              modules: course.modules || []
+            })
           }
           
           setLoading(false)
@@ -438,7 +441,7 @@ export default function CoursePage() {
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-900">Course Content</h2>
               
-              {course.modules.map((module, index) => (
+              {course?.modules?.map((module, index) => (
                 <div key={module.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
@@ -462,7 +465,7 @@ export default function CoursePage() {
 
                     {/* Lessons */}
                     <div className="space-y-3">
-                      {module.lessons.map((lesson) => {
+                      {module.lessons?.map((lesson) => {
                         const isCompleted = lesson.userProgress?.status === 'completed';
                         return (
                           <div 
@@ -683,12 +686,12 @@ export default function CoursePage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Modules</span>
-                    <span className="font-medium">{course.modules.length}</span>
+                    <span className="font-medium">{course?.modules?.length || 0}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Lessons</span>
                     <span className="font-medium">
-                      {course.modules.reduce((total, module) => total + module.lessons.length, 0)}
+                      {course?.modules?.reduce((total, module) => total + (module.lessons?.length || 0), 0) || 0}
                     </span>
                   </div>
                 </div>
