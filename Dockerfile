@@ -21,7 +21,7 @@ RUN mkdir -p public
 
 # Set environment variables for Next.js
 ENV NODE_ENV=production
-ENV NEXT_PUBLIC_API_URL=https://cybertest-production.up.railway.app
+ENV NEXT_PUBLIC_API_URL=https://cybertest-frontend-production.up.railway.app
 ENV PORT=3000
 
 # Build the Next.js application
