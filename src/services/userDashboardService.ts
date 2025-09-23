@@ -37,7 +37,7 @@ export interface UserDashboardData {
 }
 
 class UserDashboardService {
-  private baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app';
+  private baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-frontend-production.up.railway.app';
 
   async getUserDashboardData(): Promise<UserDashboardData> {
     try {

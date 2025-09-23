@@ -43,7 +43,7 @@ export default function PhishingLandingPage() {
 
   const trackAction = async (action: string) => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'}/api/phishing/track/open`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-frontend-production.up.railway.app'}/api/phishing/track/open`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -6,7 +6,7 @@ export interface CourseService {
 }
 
 class CourseServiceImpl implements CourseService {
-  private baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'
+  private baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-frontend-production.up.railway.app'
 
   async getCourses(): Promise<Course[]> {
     try {

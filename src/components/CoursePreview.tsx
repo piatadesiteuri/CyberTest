@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Play, BookOpen, Clock, Users, Award, ChevronRight, ChevronDown } from 'lucide-react'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-frontend-production.up.railway.app'
 
 interface Course {
   id: string

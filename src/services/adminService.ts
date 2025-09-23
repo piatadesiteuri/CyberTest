@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-frontend-production.up.railway.app';
 
 export interface DashboardMetrics {
   totalUsers: number;

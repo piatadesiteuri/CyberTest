@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { X, Save, Eye } from 'lucide-react'
 import { useToast } from '@/contexts/ToastContext'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-frontend-production.up.railway.app'
 
 interface LessonModalProps {
   moduleId: string

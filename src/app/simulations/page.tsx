@@ -33,7 +33,7 @@ export default function SimulationsPage() {
   useEffect(() => {
     const fetchCampaigns = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-production.up.railway.app'}/api/phishing/campaigns`)
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cybertest-frontend-production.up.railway.app'}/api/phishing/campaigns`)
         if (response.ok) {
           const data = await response.json()
           setCampaigns(data.data || [])
